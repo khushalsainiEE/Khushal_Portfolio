@@ -4,6 +4,10 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v0.4.3 — 2026-05-29
+- Fixed 3D camera: self-hosted `assets/models/AntiqueCamera.glb`, instant fallback, load timeout
+- Added `scripts/serve.ps1` for reliable localhost on port 3000
+
 ## v0.4.1 — 2026-05-29
 - Pushed to GitHub: [khushalsainiEE/Khushal_Portfolio](https://github.com/khushalsainiEE/Khushal_Portfolio)
 - Added `scripts/git-here.ps1` for terminals where `git` is not on PATH
