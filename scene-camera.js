@@ -168,7 +168,13 @@ if (!canvas || !wrap) {
 
   // Show interactive fallback immediately — never stuck on "Loading…"
   mountModel(buildFallbackCamera(), true);
-  if (loaderEl) loaderEl.hidden = true;
+  // Wait for first rendered frame before hiding loader
+  renderer.render(scene, camera);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (loaderEl) loaderEl.hidden = true;
+    });
+  });
 
   /* ── Load real GLTF model ─────────────────────────────── */
   async function loadAntiqueCamera() {
