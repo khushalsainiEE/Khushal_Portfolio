@@ -1,0 +1,21 @@
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# Secrets
+.env
+.env.*
+
+# Large media (keep locally; host videos on YouTube/Vimeo)
+# Uncomment if you add huge raw files:
+# assets/videos/*.mp4
+# assets/videos/*.mov
+
+# Logs
+*.log
