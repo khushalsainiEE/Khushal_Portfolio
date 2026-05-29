@@ -8,9 +8,9 @@ const PORTFOLIO_MEDIA = {
   },
 
   photos: [
-    { src: 'assets/images/photo-1.jpg', label: 'Event Coverage', alt: 'Event coverage' },
-    { src: 'assets/images/photo-2.PNG', label: 'Portraits', alt: 'Portrait' },
-    { src: 'assets/images/photo-3.JPG', label: 'Tech Events', alt: 'Tech event' },
+    { src: 'assets/images/photo-1.jpg', label: 'ASU Sparky', alt: 'ASU Sparky' },
+    { src: 'assets/images/photo-2.PNG', label: 'Hindu Yuva ASU', alt: 'Hindu Yuva ASU' },
+    { src: 'assets/images/photo-3.JPG', label: 'Devil Palooza', alt: 'Devil Palooza' },
   ],
 
   showreel: {
