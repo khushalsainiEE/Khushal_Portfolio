@@ -31,7 +31,20 @@ Your project is only on your PC until **Git** is installed and you push. Connect
 
 Download and install: [https://git-scm.com/download/win](https://git-scm.com/download/win)
 
-Restart Cursor after installing.
+**If terminal says `git is not recognized`** (even after install):
+
+1. **Fully quit and reopen Cursor** (not only the terminal tab), or  
+2. In the project folder, run once per terminal session:
+
+```powershell
+. .\scripts\git-here.ps1
+```
+
+3. **Permanent fix (Windows):** Settings → System → About → Advanced system settings → Environment Variables → edit **Path** → add:
+   - `C:\Program Files\Git\cmd`
+   - `C:\Program Files\Git\bin`
+
+This repo is already connected to: [https://github.com/khushalsainiEE/Khushal_Portfolio](https://github.com/khushalsainiEE/Khushal_Portfolio)
 
 ### 2. Create an empty repo on GitHub
 
@@ -56,7 +69,7 @@ git init
 git add .
 git commit -m "v0.4.0: portfolio with Three.js studio and dark mode"
 git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/portfolio.git
+git remote add origin https://github.com/khushalsainiEE/Khushal_Portfolio.git
 git push -u origin main
 ```
 

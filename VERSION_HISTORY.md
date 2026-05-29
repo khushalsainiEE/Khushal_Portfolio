@@ -4,6 +4,10 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v0.4.1 — 2026-05-29
+- Pushed to GitHub: [khushalsainiEE/Khushal_Portfolio](https://github.com/khushalsainiEE/Khushal_Portfolio)
+- Added `scripts/git-here.ps1` for terminals where `git` is not on PATH
+
 ## v0.4.0 — 2026-05-29
 - Added interactive **Three.js** antique camera scene (Khronos CC0 model)
 - Orbit controls, theme-aware lighting, reduced-motion support
