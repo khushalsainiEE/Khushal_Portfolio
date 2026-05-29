@@ -4,6 +4,11 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v0.5.0 — 2026-05-29
+- Hero + photography images wired (`hero.JPG`, photo-1/2/3)
+- All YouTube / Shorts project links in `media-config.js`
+- Auto YouTube thumbnails on video cards; Instagram reel opens externally
+
 ## v0.4.3 — 2026-05-29
 - Fixed 3D camera: self-hosted `assets/models/AntiqueCamera.glb`, instant fallback, load timeout
 - Added `scripts/serve.ps1` for reliable localhost on port 3000

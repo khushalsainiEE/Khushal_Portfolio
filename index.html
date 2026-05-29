@@ -1882,10 +1882,17 @@
     }
   }
 
+  function youtubeThumbFromVideo(video) {
+    if (!video?.url && !video?.id) return null;
+    const id = video.id || parseVideoId(video.url, 'youtube');
+    return id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : null;
+  }
+
   document.querySelectorAll('.work-item[data-video-key]').forEach(item => {
     const key = item.dataset.videoKey;
     const video = media.videos?.[key];
-    if (video?.thumb) injectThumb(item, video.thumb);
+    const thumb = video?.thumb || youtubeThumbFromVideo(video);
+    if (thumb) injectThumb(item, thumb);
   });
 
   document.querySelectorAll('[data-photo-index]').forEach(card => {
@@ -1903,7 +1910,9 @@
   function parseVideoId(url, host) {
     if (!url) return null;
     if (host === 'youtube') {
-      const m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([\w-]{11})/);
+      const m = url.match(
+        /(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([\w-]{11})/
+      );
       return m ? m[1] : null;
     }
     if (host === 'vimeo') {
@@ -1928,6 +1937,9 @@
     if (video.type === 'file' && video.src) {
       return `<video src="${video.src}" controls playsinline poster="${video.thumb || ''}"></video>`;
     }
+    if (video.type === 'external' && video.url) {
+      return 'external';
+    }
     return null;
   }
 
@@ -1938,9 +1950,14 @@
   const modalPlaceholder = document.getElementById('modalPlaceholder');
   const modalClose = document.getElementById('modalClose');
 
+  const defaultPlaceholderHtml = modalPlaceholder?.innerHTML || '';
+
   function clearModalPlayer() {
     modalBody.querySelectorAll('iframe, video').forEach(el => el.remove());
-    modalPlaceholder.style.display = '';
+    if (modalPlaceholder) {
+      modalPlaceholder.style.display = '';
+      modalPlaceholder.innerHTML = defaultPlaceholderHtml;
+    }
   }
 
   function openModal(title, org, videoKey) {
@@ -1948,11 +1965,24 @@
     clearModalPlayer();
     const video = videoKey ? media.videos?.[videoKey] : null;
     const embed = buildEmbed(video);
-    if (embed) {
+    if (embed === 'external') {
+      const platform = video.platform || 'external site';
+      modalPlaceholder.style.display = 'flex';
+      modalPlaceholder.innerHTML = `
+        <a href="${video.url}" target="_blank" rel="noopener noreferrer" class="showreel-btn" style="margin:0">
+          <span>Watch on ${platform}</span>
+          <span class="btn-arrow">↗</span>
+        </a>
+        <p style="margin-top:1rem;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--warm-mid)">
+          ${platform} videos open in a new tab (embedding is not allowed).
+        </p>`;
+      modalSubtitle.textContent = org || '';
+    } else if (embed) {
       modalPlaceholder.style.display = 'none';
       modalBody.insertAdjacentHTML('beforeend', embed);
       modalSubtitle.textContent = org || '';
     } else {
+      modalPlaceholder.style.display = 'flex';
       modalSubtitle.textContent = org
         ? `${org} — Add this video in media-config.js (YouTube, Vimeo, or MP4).`
         : 'Add this video in media-config.js using type: youtube, vimeo, or file.';
