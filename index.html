@@ -2011,7 +2011,16 @@
   if (showreelBtn && media.showreel) {
     showreelBtn.addEventListener('click', e => {
       e.preventDefault();
-      openModal('Showreel', 'Full reel', 'showreel');
+      const embed = buildEmbed(media.showreel);
+      modalTitle.textContent = 'Showreel';
+      clearModalPlayer();
+      if (embed && embed !== 'external') {
+        modalPlaceholder.style.display = 'none';
+        modalBody.insertAdjacentHTML('beforeend', embed);
+        modalSubtitle.textContent = '2022 – 2025';
+      }
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
     });
   }
 
