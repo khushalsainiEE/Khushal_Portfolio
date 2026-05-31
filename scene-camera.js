@@ -37,16 +37,16 @@ if (!canvas || !wrap) {
   /* ── Scene / Camera ───────────────────────────────────── */
   const scene  = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
-  camera.position.set(0.8, 0.55, 1.6);
+  camera.position.set(1.2, 0.8, 1.8);
 
   /* ── Controls ─────────────────────────────────────────── */
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping   = true;
   controls.dampingFactor   = 0.06;
   controls.minDistance     = 0.6;
-  controls.maxDistance     = 4.5;
+  controls.maxDistance     = 6.5;
   controls.maxPolarAngle   = Math.PI * 0.92;
-  controls.target.set(0, 0.35, 0);
+  controls.target.set(0, 0.65, 0);
   controls.autoRotate      = !prefersReducedMotion;
   controls.autoRotateSpeed = 0.55;
 
