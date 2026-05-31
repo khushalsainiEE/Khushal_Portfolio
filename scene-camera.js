@@ -43,10 +43,13 @@ if (!canvas || !wrap) {
   const controls = new OrbitControls(camera, canvas);
   controls.enableDamping   = true;
   controls.dampingFactor   = 0.06;
-  controls.minDistance     = 0.6;
-  controls.maxDistance     = 6.5;
+  controls.minDistance     = 1.0;
+  controls.maxDistance     = 12.0;
   controls.maxPolarAngle   = Math.PI * 0.92;
-  controls.target.set(0, 2.0, 0);
+  controls.enablePan       = true;
+  controls.panSpeed        = 0.8;
+  controls.screenSpacePanning = true;
+  controls.target.set(0, 0.65, 0);
   controls.autoRotate      = !prefersReducedMotion;
   controls.autoRotateSpeed = 0.55;
 
@@ -167,8 +170,9 @@ if (!canvas || !wrap) {
       fallbackMesh = object;
     } else {
       // Fixed framing for the real antique camera model — shows the camera head
-      camera.position.set(0.6, 3.8, 2.8);
-      controls.target.set(0, 3.2, 0);
+      // Zoom out far and center on mid-model so full camera is visible
+      camera.position.set(0.8, 1.5, 9.0);
+      controls.target.set(0, 1.5, 0);
       controls.update();
     }
   }
