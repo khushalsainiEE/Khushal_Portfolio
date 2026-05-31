@@ -490,6 +490,22 @@
     pointer-events: none;
     z-index: 3;
   }
+  .studio-reset {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--warm-mid);
+  background: none;
+  border: none;
+  cursor: none;
+  padding: 0.4rem 0.6rem;
+  transition: color 0.2s;
+  z-index: 3;
+}
+.studio-reset:hover { color: var(--accent); }
   .studio-credit {
     position: absolute;
     bottom: 1rem;
@@ -1365,6 +1381,7 @@
       <div class="studio-loader" id="studioLoader">Starting studio…</div>
       <canvas id="cameraCanvas" aria-label="Interactive 3D antique camera model"></canvas>
       <span class="studio-hint">DRAG · SCROLL · RIGHT-CLICK PAN</span>
+      <button id="studioReset" class="studio-reset">RESET · ↺</button>
       <p class="studio-credit">
         Model:
         <a href="https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/AntiqueCamera" target="_blank" rel="noopener">Antique Camera</a>

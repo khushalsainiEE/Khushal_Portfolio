@@ -54,7 +54,15 @@ if (!canvas || !wrap) {
   controls.autoRotateSpeed = 0.55;
 
   canvas.addEventListener('pointerdown', () => { controls.autoRotate = false; });
-
+  const resetBtn = document.getElementById('studioReset');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      camera.position.set(0.8, 4.5, 9.0);
+      controls.target.set(0, 4.5, 0);
+      controls.autoRotate = !prefersReducedMotion;
+      controls.update();
+    });
+  }
   /* ── Rig ──────────────────────────────────────────────── */
   const rig = new THREE.Group();
   scene.add(rig);
