@@ -171,8 +171,8 @@ if (!canvas || !wrap) {
     } else {
       // Fixed framing for the real antique camera model — shows the camera head
       // Zoom out far and center on mid-model so full camera is visible
-      camera.position.set(0.8, 1.5, 9.0);
-      controls.target.set(0, 1.5, 0);
+      camera.position.set(0.8, 4.5, 9.0);
+      controls.target.set(0, 4.5, 0);
       controls.update();
     }
   }
