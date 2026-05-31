@@ -153,7 +153,7 @@ if (!canvas || !wrap) {
   function mountModel(object, isFallback) {
     if (fallbackMesh) {
       rig.remove(fallbackMesh);
-      fallbackMesh.traverse(c => {
+      fallbackMesh.traverse((c) => {
         if (c.geometry) c.geometry.dispose();
         if (c.material) {
           (Array.isArray(c.material) ? c.material : [c.material]).forEach(m => m.dispose());
@@ -162,8 +162,15 @@ if (!canvas || !wrap) {
       fallbackMesh = null;
     }
     rig.add(object);
-    frameObject(object);
-    if (isFallback) fallbackMesh = object;
+    if (isFallback) {
+      frameObject(object);
+      fallbackMesh = object;
+    } else {
+      // Fixed framing for the real antique camera model — shows the camera head
+      camera.position.set(0.6, 3.8, 2.8);
+      controls.target.set(0, 3.2, 0);
+      controls.update();
+    }
   }
 
   // Show interactive fallback immediately — never stuck on "Loading…"
