@@ -187,13 +187,13 @@ if (!canvas || !wrap) {
 
   // Show interactive fallback immediately — never stuck on "Loading…"
   mountModel(buildFallbackCamera(), true);
-  // Wait for first rendered frame before hiding loader
-  renderer.render(scene, camera);
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (loaderEl) loaderEl.hidden = true;
-    });
-  });
+  // Hold loader for 3s to cover low-poly fallback, then fade out
+  setTimeout(() => {
+    if (loaderEl) {
+      loaderEl.classList.add('fade-out');
+      setTimeout(() => { loaderEl.hidden = true; }, 800);
+    }
+  }, 3000);
 
   /* ── Load real GLTF model ─────────────────────────────── */
   async function loadAntiqueCamera() {
