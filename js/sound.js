@@ -122,6 +122,12 @@ export const Sound = {
     tone({ freq: 110, a: 0.05, d: 0.9, peak: 0.25, glide: 0.5, delay: 0.5, force });
     tone({ freq: 880, type: 'triangle', a: 0.005, d: 0.4, peak: 0.06, glide: 1.5, delay: 0.55, force });
   },
+  /** heartbeat on the film grid: a low "lub", then a softer "dub" */
+  beat() {
+    tone({ freq: 78, a: 0.006, d: 0.16, peak: 0.32, glide: 0.55 });
+    noise({ a: 0.002, d: 0.05, peak: 0.05, f0: 300, f1: 120, q: 0.9 });
+    tone({ freq: 66, a: 0.006, d: 0.14, peak: 0.2, glide: 0.55, delay: 0.24 });
+  },
   /** cards landing in the spiral */
   deal(i) { tone({ freq: 420 + i * 70, a: 0.003, d: 0.07, peak: 0.05, glide: 1.4 }); },
 };

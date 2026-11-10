@@ -4,6 +4,11 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.3.0 — 2026-11-10
+- Film viewer: the close button stays pinned at the top right however far you scroll (original and full width)
+- Spiral: wider spacing so neighbouring cards keep a small gap and switching between landscape and portrait is smoother
+- Heartbeat: click the empty grid on the film side and a lub-dub ripple runs through dots on the grid, with a soft low thump
+
 ## v1.2.1 — 2026-11-10
 - Spiral: cards are painted in depth order, so the focused card stays in front and landscape/portrait cards never slice through each other
 - Research row shows all four results (cutoff frequency, capacitance, breakdown, fc × breakdown)

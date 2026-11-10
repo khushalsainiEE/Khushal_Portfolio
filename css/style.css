@@ -426,6 +426,7 @@ body.side-film .reel-badge { opacity: 1; pointer-events: auto; transform: none; 
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse at center, #000 30%, transparent 85%);
 }
+.film-pulse { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .spiral-wrap { position: absolute; inset: 0; touch-action: none; }
 .spiral { position: absolute; left: 50%; top: 48%; transform-style: flat; perspective: 1400px; perspective-origin: 0 -20px; }
 .s-card {
@@ -589,7 +590,9 @@ body.side-film .reel-badge { opacity: 1; pointer-events: auto; transform: none; 
   transform-origin: 0 0;
   scrollbar-width: none;
 }
-.fsheet-close { position: absolute; top: 14px; right: 14px; z-index: 4; background: var(--snow); color: var(--night); }
+.fsheet-close { position: absolute; top: 28px; right: 28px; z-index: 5; background: var(--snow); color: var(--night); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35); opacity: 0; transform: scale(0.6); transition: opacity 0.3s, transform 0.45s var(--ease-spring); }
+.fsheet.shown .fsheet-close { opacity: 1; transform: none; }
+.fsheet.shown .fsheet-close:hover { transform: scale(1.08); }
 .fsheet-media { position: relative; width: 100%; background: #000; height: calc(100vh - 28px); height: calc(100svh - 28px); display: grid; place-items: center; }
 .fsheet-media iframe { width: 100%; height: 100%; border: 0; }
 .fsheet-media { grid-template-rows: 100%; grid-template-columns: 100%; }

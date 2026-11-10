@@ -6,6 +6,7 @@
 import { FILMS, PHOTOS, SHOWREEL } from './content.js';
 import { Sound } from './sound.js';
 import { Cursor } from './cursor.js';
+import { initPulse } from './pulse.js';
 
 export function ytId(url) {
   const m = String(url).match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/);
@@ -67,9 +68,9 @@ export function initFilm({ face }) {
     el.setAttribute('aria-label', `${it.title} — ${it.kind}`);
     // cards are built at the size they appear on screen (the spiral is pushed back by its
     // radius so the front card sits at depth 0): text and photos render 1:1, never upscaled
-    const k = (window.innerWidth < 700 ? 0.6 : 1) * MAG;
-    const w = Math.round((it.vertical ? 190 : 330) * k);
-    const h = Math.round((it.vertical ? 300 : 200) * k);
+    const k = (window.innerWidth < 700 ? 0.56 : 0.82) * MAG;
+    const w = Math.round((it.vertical ? 190 : 300) * k);
+    const h = Math.round((it.vertical ? 300 : 186) * k);
     el.style.setProperty('--w', w + 'px');
     el.style.setProperty('--h', h + 'px');
     const img = document.createElement('img');
@@ -88,8 +89,9 @@ export function initFilm({ face }) {
     return el;
   });
 
-  const STEP = 360 / Math.min(N, 12);   // degrees between cards
-  const DY = (window.innerWidth < 700 ? 70 : 104) * MAG;   // vertical rise per card
+  // spacing tuned so neighbouring cards keep a small gap (≈10–80 px on laptop/desktop screens)
+  const STEP = 42;                                           // degrees between cards
+  const DY = (window.innerWidth < 700 ? 108 : 168) * MAG;   // vertical rise per card
   let pos = 0, target = 0, vel = 0, last = -1;
   let mx = 0, my = 0, tmx = 0, tmy = 0;
   let running = false, raf = 0;
@@ -182,6 +184,15 @@ export function initFilm({ face }) {
   function leave() { setTimeout(() => { running = false; }, 1300); }
 
   requestAnimationFrame(render);
+
+  // heartbeat on the empty grid (never on a card, never after a drag)
+  const pulse = initPulse(face.querySelector('#filmPulse'), face);
+  wrap.addEventListener('click', (e) => {
+    if (e.target.closest('.s-card') || dragMoved > 6) return;
+    const r = face.getBoundingClientRect();
+    pulse.beat(e.clientX - r.left, e.clientY - r.top);
+    Sound.beat();
+  });
 
   // wheel / trackpad
   wrap.addEventListener('wheel', (e) => {
