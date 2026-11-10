@@ -1,85 +1,70 @@
-# Khushal Saini — Portfolio
+# Khushal Saini — Research ⟷ Film
 
-Static portfolio site for videography, photography, and visual work.
+A two-sided portfolio. The **research side** (light) opens with a 3D silicon wafer that tilts with your mouse. Press **film side** (or the `F` key) and the whole page flips like a coin to the **film side** (dark), with a 3D spiral of videos.
 
-## Preview locally
+No build step, no npm. Vercel serves the files as they are.
 
-```powershell
-Set-Location "path\to\Portfolio"
+---
+
+## Change words, links, research or videos
+
+Open **`js/content.js`**. Everything you see on the site comes from there. Lines marked `TODO` are placeholders.
+
+| You want to… | Edit in `js/content.js` |
+|---|---|
+| Change your bio, facts, email, socials | `PROFILE` |
+| Add or edit a research project | `RESEARCH` |
+| Add a poster or figures to a project | put the image in `assets/research/`, then set `poster:` or `images:` |
+| Add or edit a film | `FILMS` (YouTube links play inside the site) |
+| Change the showreel | `SHOWREEL` |
+| Add event photos | put files in `assets/img/`, then add to `PHOTOS` |
+
+Images: use `.webp` or `.jpg`, about 1600–2000 px on the long side.
+
+## Files
+
+```
+index.html        page structure
+css/style.css     all styling
+js/content.js     ← your content (edit this)
+js/main.js        loader, research side, flip, menu, terminal
+js/film.js        film side: spiral, list, video sheet
+js/wafer.js       the 3D silicon wafer (three.js)
+js/sound.js       all sounds, generated live (no audio files)
+js/cursor.js      custom cursor
+assets/img/       photos (optimised)
+```
+
+## Hidden extras
+
+- Press `/` for a command terminal (`help`, `spin`, `invert`, `bw`, `reset`…)
+- Press `F` to flip sides. Arrow keys move the film spiral.
+- `yoursite.com/#film` opens straight on the film side.
+
+## Preview on your computer
+
+In Cursor's terminal, inside this folder:
+
+```
 python -m http.server 5500
 ```
 
-Open [http://localhost:5500](http://localhost:5500)
+Then open http://localhost:5500
 
-## Add your media
+## Publish (GitHub → Vercel)
 
-Edit **`media-config.js`** — see comments inside for photos and YouTube/Vimeo links.
+Vercel redeploys automatically whenever you push to GitHub.
 
-Put images in `assets/images/` and optional MP4 files in `assets/videos/`.
-
-## Version history
-
-See **[VERSION_HISTORY.md](./VERSION_HISTORY.md)** for a human-readable changelog. Use the same version in Git commit messages.
-
----
-
-## Push to GitHub (first time)
-
-Your project is only on your PC until **Git** is installed and you push. Connecting GitHub inside Cursor does not upload files by itself.
-
-### 1. Install Git for Windows
-
-Download and install: [https://git-scm.com/download/win](https://git-scm.com/download/win)
-
-**If terminal says `git is not recognized`** (even after install):
-
-1. **Fully quit and reopen Cursor** (not only the terminal tab), or  
-2. In the project folder, run once per terminal session:
-
-```powershell
-. .\scripts\git-here.ps1
 ```
-
-3. **Permanent fix (Windows):** Settings → System → About → Advanced system settings → Environment Variables → edit **Path** → add:
-   - `C:\Program Files\Git\cmd`
-   - `C:\Program Files\Git\bin`
-
-This repo is already connected to: [https://github.com/khushalsainiEE/Khushal_Portfolio](https://github.com/khushalsainiEE/Khushal_Portfolio)
-
-### 2. Create an empty repo on GitHub
-
-1. Go to [https://github.com/new](https://github.com/new)
-2. Name it e.g. `portfolio` or `khushal-portfolio`
-3. **Do not** add a README, .gitignore, or license (this folder already has them)
-4. Click **Create repository**
-
-### 3. Run the setup script (in Cursor terminal)
-
-```powershell
-Set-Location "c:\Users\khush\OneDrive\سطح المكتب\Portfolio"
-.\scripts\setup-github.ps1 -GitHubUser YOUR_GITHUB_USERNAME -RepoName portfolio
-```
-
-Replace `YOUR_GITHUB_USERNAME` and `portfolio` with your values.
-
-Or run the commands manually:
-
-```powershell
-git init
 git add .
-git commit -m "v0.4.0: portfolio with Three.js studio and dark mode"
-git branch -M main
-git remote add origin https://github.com/khushalsainiEE/Khushal_Portfolio.git
-git push -u origin main
+git commit -m "describe what you changed"
+git push
 ```
 
-### 4. Use Cursor Source Control
+Pushing to any branch other than `main` gives you a private **preview** link in Vercel. Pushing to `main` updates the live site.
 
-After Git is installed: **Source Control** icon → **Initialize Repository** (if needed) → stage files → commit → **Publish Branch** and pick your GitHub account.
+## Credits
 
----
-
-## 3D camera credits
-
-- [Three.js](https://threejs.org/) (MIT)
-- [Antique Camera](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/AntiqueCamera) — Khronos glTF Sample Assets, © UX3D, [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/)
+- 3D: [three.js](https://threejs.org) (MIT), loaded from jsDelivr
+- Fonts: Instrument Serif, Geist, Geist Mono, Pixelify Sans (Google Fonts, open licence)
+- Sounds: synthesised in the browser with the Web Audio API

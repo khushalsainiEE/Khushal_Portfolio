@@ -4,6 +4,16 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.0.0 — 2026-11-10 · "Two sides" revamp
+- New two-sided site: research side and film side, with a 3D coin-flip between them
+- Research side: mouse-reactive 3D silicon wafer (iridescence + diffraction shader), drop-in name chips, about, research projects with "LOADING PLS WAIT" detail pages, other work, contact
+- Film side: 3D spiral of videos, list view with floating previews, white slide-in menu with letter-roll links, rotating showreel badge, video sheet that grows from the clicked card
+- "Enter with sound / without sound" intro with pixel-curtain reveal
+- All UI sounds and ambient beds synthesised live (no audio files)
+- Custom cursor with label tags; `/` command terminal; `F` to flip
+- All content moved into `js/content.js`
+- Photos optimised (7 MB → 1.3 MB); removed the 17 MB camera model and old scripts
+
 ## v0.5.0 — 2026-05-29
 - Hero + photography images wired (`hero.JPG`, photo-1/2/3)
 - All YouTube / Shorts project links in `media-config.js`
