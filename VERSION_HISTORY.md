@@ -4,6 +4,12 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.2.1 — 2026-11-10
+- Spiral: cards are painted in depth order, so the focused card stays in front and landscape/portrait cards never slice through each other
+- Research row shows all four results (cutoff frequency, capacitance, breakdown, fc × breakdown)
+- "Fulton Forge Expo page" button next to the poster PDF (the page the poster's QR code opens)
+- List view centred with breathing room top and bottom
+
 ## v1.2.0 — 2026-11-10 · Real research content
 - Research: full write-up of the TSMC FURI project on AlN RF Schottky diodes, built from the poster (question, results at a glance, method, device design, results figures, fabrication flow, benchmark table, poster + PDF)
 - NanoFab metrology training photo as the research cover

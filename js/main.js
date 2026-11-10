@@ -130,7 +130,7 @@ $('#researchItems').innerHTML = RESEARCH.map((p, i) => `
       <div class="r-title"><span class="num">(${String(i + 1).padStart(2, '0')})</span><h3><span class="chip">${esc(p.short)}</span></h3></div>
       <div class="r-tags">${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
       <p class="r-question">${esc(p.question)}</p>
-      ${p.stats ? `<dl class="r-stats">${p.stats.slice(0, 2).map((st) => `<div><dt>${esc(st.label)}</dt><dd>${esc(st.value)}</dd></div>`).join('')}</dl>` : ''}
+      ${p.stats ? `<dl class="r-stats">${p.stats.map((st) => `<div><dt>${esc(st.label)}</dt><dd>${esc(st.value)}</dd></div>`).join('')}</dl>` : ''}
       <p class="r-meta">${esc(p.year)} · ${esc(p.lab)}${p.sponsor ? ' · ' + esc(p.sponsor) : ''}</p>
       <button class="pill r-open" data-open="${p.id}">read the research <span class="arrow">→</span></button>
     </div>
@@ -395,7 +395,7 @@ function openResearch(id) {
     <section class="rs-sec" ${D()}>
       <h3 class="rs-h">Poster</h3>
       <a class="rs-poster" href="${esc(p.pdf)}" target="_blank" rel="noopener" aria-label="Open the full poster PDF">${pic(p.poster, p.title + ' research poster')}</a>
-      <div class="rs-links"><a class="pill" href="${esc(p.pdf)}" target="_blank" rel="noopener">open poster PDF ↗</a></div>
+      <div class="rs-links"><a class="pill" href="${esc(p.pdf)}" target="_blank" rel="noopener">open poster PDF ↗</a>${p.expo ? `<a class="pill pill--line" href="${esc(p.expo.url)}" target="_blank" rel="noopener">${esc(p.expo.label)} ↗</a>` : ''}</div>
       <p class="rs-note">${esc(p.thanks)}</p>
     </section>
   `;

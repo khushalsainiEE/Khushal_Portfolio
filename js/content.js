@@ -123,6 +123,8 @@ export const RESEARCH = [
     thanks: 'Thanks to Dr. Houqiang Fu and PhD mentor Bingcheng Da for mentorship and measured device data, and to ASU Research Computing (Sol), Silvaco and FURI.',
     poster: 'assets/research/furi-poster',
     pdf: 'assets/research/saini-furi-poster.pdf',
+    // the page the QR code on the poster leads to
+    expo: { label: 'Fulton Forge Expo page', url: 'https://forge.engineering.asu.edu/participant/saini-khushal/' },
   },
 ];
 

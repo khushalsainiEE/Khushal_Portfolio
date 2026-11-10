@@ -121,7 +121,9 @@ export function initFilm({ face }) {
     const it = introStart < 0 ? 1 : Math.min(1, ((now || performance.now()) - introStart) / INTRO_MS);
     const E = easeIO(it);
     const R = RAD();
-    spiral.style.transform = `translateZ(${(-R).toFixed(1)}px) rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10 + (1 - E) * -24).toFixed(2)}deg)`;
+    // each card carries the whole chain itself (push back, tilt, place on the helix). The spiral
+    // container is flat, so cards are painted in depth order and never cut through each other.
+    const base = `translateZ(${(-R).toFixed(1)}px) rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10 + (1 - E) * -24).toFixed(2)}deg) `;
     const bend = Math.max(-18, Math.min(18, vel * 260)) * E;
     const spin = (1 - E) * -1.6;           // the whole helix swings into place
 
@@ -134,14 +136,16 @@ export function initFilm({ face }) {
       const ang = o * STEP * e;
       const vis = abs < N / 2 - 0.5;
       const el = cards[i], c = cache[i];
-      const tr = `rotateY(${ang.toFixed(2)}deg) translateZ(${(R * (0.25 + 0.75 * e)).toFixed(1)}px) translateY(${(o * DY * e).toFixed(1)}px) rotateY(${(-ang * 0.35).toFixed(2)}deg) skewY(${(bend * Math.sign(o || 1) * 0.3).toFixed(2)}deg) rotateZ(${(bend * 0.15 + (1 - e) * o * 4).toFixed(2)}deg) scale(${(0.72 + 0.28 * e).toFixed(3)})`;
+      const tr = base + `rotateY(${ang.toFixed(2)}deg) translateZ(${(R * (0.25 + 0.75 * e)).toFixed(1)}px) translateY(${(o * DY * e).toFixed(1)}px) rotateY(${(-ang * 0.35).toFixed(2)}deg) skewY(${(bend * Math.sign(o || 1) * 0.3).toFixed(2)}deg) rotateZ(${(bend * 0.15 + (1 - e) * o * 4).toFixed(2)}deg) scale(${(0.72 + 0.28 * e).toFixed(3)})`;
       put(el, c, 't', 'transform', tr);
       const op = vis ? Math.max(0, 1 - Math.max(0, abs - 2.4) * 0.28) * e : 0;
       put(el, c, 'o', 'opacity', op.toFixed(2));
       // blur stepped in 0.5px increments: far cheaper than a new filter every frame
       const blur = Math.round(Math.max(0, abs - 1.1) * 2.4 * e * 2) / 2;
       put(el, c, 'f', 'filter', blur > 0 ? `blur(${blur}px) brightness(${(1 - Math.min(0.5, Math.round(abs) * 0.1)).toFixed(1)})` : 'none');
-      put(el, c, 'z', 'zIndex', String(100 - Math.round(abs * 10)));
+      // paint order follows real depth on the cylinder; the focused card always wins
+      const depth = Math.cos((ang + mx * 10) * Math.PI / 180) * (0.25 + 0.75 * e);
+      put(el, c, 'z', 'zIndex', String(Math.round(1000 + depth * 500 - abs)));
       put(el, c, 'p', 'pointerEvents', abs < 2.6 && it >= 1 ? 'auto' : 'none');
     }
     const cur = ((Math.round(pos) % N) + N) % N;
