@@ -158,7 +158,7 @@ const diffractionShader = {
       float bandA = pow(0.5 + 0.5 * sin(gx * 9.0 + uTime * 0.2), 3.0);
       float bandB = pow(0.5 + 0.5 * sin(gy * 9.0 - uTime * 0.17), 3.0);
       float fres = pow(1.0 - clamp(dot(vN, V), 0.0, 1.0), 1.2);
-      vec3 col = (cA * bandA + cB * bandB) * m * (0.28 + 0.9 * fres) * uStrength;
+      vec3 col = (cA * bandA + cB * bandB) * m * (0.45 + 1.1 * fres) * uStrength;
       gl_FragColor = vec4(col, 1.0);
     }`,
 };
@@ -191,7 +191,7 @@ export function createWafer(canvas, { onReady } = {}) {
 
   // body (edge)
   const bodyGeo = new THREE.ExtrudeGeometry(shape, { depth: 0.035, bevelEnabled: true, bevelThickness: 0.008, bevelSize: 0.008, bevelSegments: 3, curveSegments: 160 });
-  bodyGeo.translate(0, 0, -0.035);
+  bodyGeo.translate(0, 0, -0.043);   // bevel adds 0.008 on top: keep the cap at z = 0
   const body = new THREE.Mesh(bodyGeo, new THREE.MeshPhysicalMaterial({ color: 0x8d939c, metalness: 1, roughness: 0.25 }));
   group.add(body);
 
@@ -201,18 +201,18 @@ export function createWafer(canvas, { onReady } = {}) {
   const topMat = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
     map: tex.map,
-    metalness: 0.92,
-    roughness: 0.14,
+    metalness: 0.7,
+    roughness: 0.2,
     iridescence: 1,
     iridescenceIOR: 1.55,
     iridescenceThicknessRange: [180, 820],
     iridescenceThicknessMap: tex.thickness,
     clearcoat: 1,
     clearcoatRoughness: 0.06,
-    envMapIntensity: 1.25,
+    envMapIntensity: 1.4,
   });
   const top = new THREE.Mesh(topGeo, topMat);
-  top.position.z = 0.0015;
+  top.position.z = 0.002;
   group.add(top);
 
   // diffraction layer
@@ -225,7 +225,7 @@ export function createWafer(canvas, { onReady } = {}) {
   });
   difMat.uniforms.uGrating.value = tex.grating;
   const dif = new THREE.Mesh(topGeo, difMat);
-  dif.position.z = 0.003;
+  dif.position.z = 0.004;
   group.add(dif);
 
   // moving coloured lights sweep highlights across the surface
