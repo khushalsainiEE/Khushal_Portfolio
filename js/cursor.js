@@ -1,25 +1,31 @@
 /* ============================================================
-   CURSOR — a blend-mode dot that eases after the mouse, swells
-   over anything clickable and can carry a little label tag.
+   CURSOR
+   • Research side: the normal system cursor (simple, zero lag).
+   • Film side: a white dot that sits exactly on the pointer —
+     moved on every pointer event, no easing — which swells over
+     clickable things and can carry a small label tag.
    ============================================================ */
 const el = document.getElementById('cursor');
-const fine = window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-let x = -100, y = -100, tx = -100, ty = -100;
-let tagText = null;
 const tagEl = el ? el.querySelector('.c-tag') : null;
+const fine = window.matchMedia('(pointer: fine)').matches;
+const onFilm = () => document.body.classList.contains('side-film');
 
 export const Cursor = {
   init() {
     if (!fine || !el) return;
-    document.body.classList.add('has-cursor');
-    window.addEventListener('pointermove', (e) => { tx = e.clientX; ty = e.clientY; }, { passive: true });
-    window.addEventListener('pointerdown', () => el.classList.add('is-down'));
-    window.addEventListener('pointerup', () => el.classList.remove('is-down'));
-    document.addEventListener('pointerleave', () => (el.style.opacity = '0'));
-    document.addEventListener('pointerenter', () => (el.style.opacity = '1'));
+    document.body.classList.add('has-cursor');   // CSS hides the system cursor on the film side only
 
-    // anything interactive swells the dot; data-cursor="label" shows a tag
+    const move = (e) => {
+      el.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+    };
+    window.addEventListener('pointermove', move, { passive: true });
+    window.addEventListener('pointerdown', (e) => { move(e); el.classList.add('is-down'); });
+    window.addEventListener('pointerup', () => el.classList.remove('is-down'));
+    document.documentElement.addEventListener('pointerleave', () => el.classList.add('is-out'));
+    document.documentElement.addEventListener('pointerenter', () => el.classList.remove('is-out'));
+
     document.addEventListener('pointerover', (e) => {
+      if (!onFilm()) return;
       const t = e.target.closest('a, button, [data-cursor], input');
       if (!t) return;
       if (t.dataset.cursor && t.dataset.cursor !== 'top') this.tag(t.dataset.cursor);
@@ -32,19 +38,10 @@ export const Cursor = {
       el.classList.remove('is-hover');
       if (t.dataset.cursor) this.tag(null);
     });
-
-    const loop = () => {
-      x += (tx - x) * 0.22;
-      y += (ty - y) * 0.22;
-      el.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-      requestAnimationFrame(loop);
-    };
-    loop();
   },
   tag(text) {
     if (!fine || !el) return;
-    tagText = text;
-    if (text) { tagEl.textContent = text; el.classList.add('is-tag'); el.classList.remove('is-hover'); }
-    else el.classList.remove('is-tag');
+    if (text && onFilm()) { tagEl.textContent = text; el.classList.add('is-tag'); el.classList.remove('is-hover'); }
+    else el.classList.remove('is-tag', 'is-hover');
   },
 };

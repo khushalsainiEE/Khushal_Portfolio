@@ -25,24 +25,11 @@
 }
 </script>
 </head>
-<body class="is-loading">
-
-<!-- ========== LOADER ========== -->
-<div id="loader" aria-live="polite">
-  <div class="curtain" aria-hidden="true"></div>
-  <div class="loader-inner">
-    <div class="loader-chips">
-      <span class="chip chip--light">LOADING</span>
-      <span class="chip chip--box">PLS</span>
-      <span class="chip chip--light">WAIT</span>
-    </div>
-    <div class="loader-bar"><i></i></div>
-    <div class="loader-enter">
-      <button class="pill pill--light" data-enter="sound">enter with sound <b class="dot"></b></button>
-      <button class="pill pill--ghost" data-enter="mute">enter without sound</button>
-    </div>
-  </div>
-</div>
+<body>
+<script>
+  // pick the starting side before first paint so there is no flash
+  document.body.className = location.hash === '#film' ? 'side-film' : 'side-research';
+</script>
 
 <!-- ========== CURSOR ========== -->
 <div id="cursor" aria-hidden="true"><i class="c-dot"></i><span class="c-tag"></span></div>

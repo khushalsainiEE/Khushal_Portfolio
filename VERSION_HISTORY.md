@@ -4,6 +4,14 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.1.0 — 2026-11-10
+- Removed the loading screen: the research side opens straight away
+- No background music; research side is silent; sound effects only on the film side (sound button shown there only)
+- Cursor: normal system cursor on the research side; instant, no-lag dot on the film side
+- Spiral now unfolds smoothly after the flip instead of snapping into place; lighter per-frame rendering
+- Photo viewer shows portrait photos uncropped, with an "original / full width" toggle
+- Film viewer stays black when you scroll down
+
 ## v1.0.0 — 2026-11-10 · "Two sides" revamp
 - New two-sided site: research side and film side, with a 3D coin-flip between them
 - Research side: mouse-reactive 3D silicon wafer (iridescence + diffraction shader), drop-in name chips, about, research projects with "LOADING PLS WAIT" detail pages, other work, contact

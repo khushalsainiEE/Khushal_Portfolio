@@ -1,5 +1,5 @@
 /* ============================================================
-   MAIN — loader, research side, the flip, menu, sheets, terminal.
+   MAIN — research side, the flip, menu, sheets, terminal.
    ============================================================ */
 import { PROFILE, RESEARCH, OTHER } from './content.js';
 import { Sound } from './sound.js';
@@ -22,50 +22,29 @@ const faceF = $('#film');
 const scroller = $('#researchScroll');
 
 /* ============================================================
-   LOADER
+   START — no loading screen: the research side opens directly.
+   The wafer fades in once three.js arrives; chips drop once the
+   fonts are ready (capped so a slow font never holds the page).
    ============================================================ */
-const loader = $('#loader');
-const curtain = $('.curtain', loader);
-const COLS = window.innerWidth < 700 ? 8 : 14;
-curtain.style.setProperty('--cols', COLS);
-for (let i = 0; i < COLS; i++) {
-  const c = document.createElement('i');
-  c.style.transitionDelay = `${Math.abs(i - COLS / 2) * 35}ms`;
-  curtain.appendChild(c);
-}
-const bar = $('.loader-bar i', loader);
-let progress = 0;
-const setP = (p) => { progress = Math.max(progress, p); bar.style.setProperty('--p', progress); };
+import('./wafer.js')
+  .then(({ createWafer }) => { wafer = createWafer($('#wafer')); activateSide(); })
+  .catch(() => document.documentElement.classList.add('no-webgl'));
 
-const waits = [
-  document.fonts.ready.then(() => setP(0.35)),
-  new Promise((res) => { const im = new Image(); im.onload = im.onerror = res; im.src = PROFILE.photo + '.webp'; }).then(() => setP(0.6)),
-  new Promise((res) => {
-    import('./wafer.js')
-      .then(({ createWafer }) => { wafer = createWafer($('#wafer'), { onReady: res }); })
-      .catch(() => { document.documentElement.classList.add('no-webgl'); res(); });
-  }).then(() => setP(0.9)),
-  new Promise((r) => setTimeout(r, 900)),
-];
-const maxWait = new Promise((r) => setTimeout(r, 4000));
-Promise.race([Promise.all(waits), maxWait]).then(() => {
-  setP(1);
-  setTimeout(() => loader.classList.add('ready'), 250);
+let chipsDropped = false;
+let fontsReady = false;
+Promise.race([document.fonts.ready, new Promise((r) => setTimeout(r, 1200))]).then(() => {
+  fontsReady = true;
+  if (side === 'research') dropChips();
 });
 
-function enterSite(withSound) {
-  if (loader.classList.contains('out')) return;
-  Sound.enable(withSound);
-  Sound.setSide(side);
-  if (withSound) Sound.ready();
-  loader.classList.add('out');
-  document.body.classList.remove('is-loading');
-  setTimeout(() => { loader.classList.add('gone'); }, 1300);
-  setTimeout(dropChips, 450);
-  activateSide();
+// sound needs a click before the browser allows it; the film side
+// switches it on with the first click there (unless muted before)
+function wakeSound(e) {
+  if (e.target && e.target.closest && e.target.closest('#soundBtn')) return;   // the button handles itself
+  if (side === 'film' && !Sound.enabled && Sound.wanted) Sound.enable(true);
 }
-$$('[data-enter]', loader).forEach((b) => b.addEventListener('click', () => enterSite(b.dataset.enter === 'sound')));
-window.addEventListener('keydown', (e) => { if (e.key === 'Enter' && loader.classList.contains('ready')) enterSite(localStorage.getItem('ks-sound') !== '0'); });
+window.addEventListener('pointerdown', wakeSound);
+window.addEventListener('keydown', wakeSound);
 
 /* ============================================================
    RESEARCH — render content
@@ -95,17 +74,17 @@ chipRows.forEach((row) => {
     s.style.setProperty('--r', c.r + 'deg');
     s.style.setProperty('--r0', (c.r * -4) + 'deg');
     s.dataset.depth = (0.4 + Math.random() * 0.9).toFixed(2);
-    s.addEventListener('pointerenter', () => Sound.hover());
     r.appendChild(s);
     chips.push(s);
   });
   heroH1.appendChild(r);
 });
 function dropChips() {
+  if (chipsDropped || !fontsReady) return;
+  chipsDropped = true;
   chips.forEach((c, i) => {
     setTimeout(() => {
       c.classList.add('in');
-      Sound.pop(i);
       c.addEventListener('animationend', () => { c.classList.remove('in'); c.classList.add('settled'); }, { once: true });
     }, reduced ? 0 : 120 * i);
   });
@@ -122,7 +101,7 @@ window.addEventListener('pointermove', (e) => {
 }, { passive: true });
 
 // click / tap the wafer to spin it
-$('#wafer').addEventListener('click', (e) => { wafer && wafer.burst(e.clientX < window.innerWidth / 2 ? -1 : 1); Sound.whoosh(); });
+$('#wafer').addEventListener('click', (e) => { wafer && wafer.burst(e.clientX < window.innerWidth / 2 ? -1 : 1); });
 
 // statement: [[chip]] syntax, words light up as you scroll
 const st = $('#statementText');
@@ -243,7 +222,8 @@ function activateSide() {
   faceR.inert = side !== 'research';
   faceF.inert = side !== 'film';
   wafer && wafer.setActive(side === 'research' && scroller.scrollTop < hero.offsetHeight);
-  film && film.setActive(side === 'film');
+  Sound.setSide(side);
+  if (side === 'research') dropChips();
   $('meta[name="theme-color"]').content = side === 'film' ? '#0a0a0a' : '#f3f0e8';
   document.title = side === 'film' ? 'Khushal Saini ✲ Film' : 'Khushal Saini ✲ Research & Film';
 }
@@ -254,13 +234,23 @@ function flip(to) {
   if (to === side || flipping) return;
   flipping = true;
   closeMenu(true);
-  Sound.flip();
   Cursor.tag(null);
+  if (to === 'film') {
+    // this click is the visitor's gesture, so audio is allowed to start here
+    if (Sound.wanted && !Sound.enabled) Sound.enable(true);
+    Sound.setSide('film');
+    Sound.flip();
+    film.prepare();          // cards gathered and hidden while the page turns
+  } else {
+    Sound.setSide('research');
+    film.leave();
+  }
   faceR.classList.remove('is-inactive');
   faceF.classList.remove('is-inactive');
   if (reduced) {
     angle += 180; book.style.transform = `rotateY(${angle}deg)`;
-    side = to; activateSide(); flipping = false; history.replaceState(null, '', to === 'film' ? '#film' : '#research');
+    side = to; activateSide(); if (to === 'film') film.enter(); flipping = false;
+    history.replaceState(null, '', to === 'film' ? '#film' : '#research');
     return;
   }
   book.classList.add('is-flipping');
@@ -270,13 +260,14 @@ function flip(to) {
     { transform: `rotateY(${a + 40}deg) scale(0.86)`, offset: 0.25 },
     { transform: `rotateY(${a + 140}deg) scale(0.86)`, offset: 0.75 },
     { transform: `rotateY(${a + 180}deg) scale(1)` },
-  ], { duration: 1400, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
+  ], { duration: 1300, easing: 'cubic-bezier(0.65, 0, 0.35, 1)' });
   setTimeout(() => {
     side = to;
     document.body.classList.toggle('side-research', side === 'research');
     document.body.classList.toggle('side-film', side === 'film');
-    Sound.setSide(side);
-  }, 700);
+  }, 650);
+  // start dealing the cards as the film face settles, so the motion is continuous
+  if (to === 'film') setTimeout(() => film.enter(), 1050);
   anim.onfinish = () => {
     angle = a + 180;
     book.style.transform = `rotateY(${angle}deg)`;
@@ -413,8 +404,8 @@ term.addEventListener('click', (e) => { if (e.target === term) closeTerm(); });
 window.addEventListener('keydown', (e) => {
   const typing = /INPUT|TEXTAREA/.test(document.activeElement.tagName);
   if (e.key === 'Escape') { closeTerm(); closeMenu(); closeResearch(); }
-  if (e.key === '/' && !typing && loader.classList.contains('gone')) { e.preventDefault(); openTerm(); }
-  if ((e.key === 'f' || e.key === 'F') && !typing && !e.metaKey && !e.ctrlKey && loader.classList.contains('gone')) flip();
+  if (e.key === '/' && !typing) { e.preventDefault(); openTerm(); }
+  if ((e.key === 'f' || e.key === 'F') && !typing && !e.metaKey && !e.ctrlKey) flip();
 });
 $('#soundBtn').addEventListener('click', () => Sound.toggle());
 
@@ -424,6 +415,5 @@ $('#soundBtn').addEventListener('click', () => Sound.toggle());
 Cursor.init();
 film = initFilm({ face: faceF });
 book.style.transform = `rotateY(${angle}deg)`;
-document.body.classList.add(side === 'film' ? 'side-film' : 'side-research');
-faceR.classList.toggle('is-inactive', side !== 'research');
-faceF.classList.toggle('is-inactive', side !== 'film');
+activateSide();
+if (side === 'film') film.enter();

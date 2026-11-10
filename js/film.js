@@ -91,49 +91,89 @@ export function initFilm({ face }) {
   let running = false, raf = 0;
   let dragMoved = 0;
   let view = 'spiral';
+  // intro: cards unfold from a tight stack into the spiral, centre card first
+  let introStart = -1;
+  const INTRO_MS = 1500;
+  const easeOut = (x) => 1 - Math.pow(1 - x, 4);
+  const easeIO = (x) => (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
+  // cache last written values so we only touch the DOM when something changed
+  const cache = cards.map(() => ({ t: '', o: '', f: '', z: '', p: '' }));
+  const put = (el, c, key, prop, val) => { if (c[key] !== val) { c[key] = val; el.style[prop] = val; } };
 
   function wrapOffset(o) {
     o = ((o % N) + N) % N;
     return o > N / 2 ? o - N : o;
   }
 
-  function render() {
+  function render(now) {
     raf = requestAnimationFrame(render);
     if (!running) return;
     const prev = pos;
     pos += (target - pos) * 0.085;
     vel += ((pos - prev) - vel) * 0.25;
-    mx += (tmx - mx) * 0.05;
-    my += (tmy - my) * 0.05;
+    mx += (tmx - mx) * 0.06;
+    my += (tmy - my) * 0.06;
+
+    const it = introStart < 0 ? 1 : Math.min(1, ((now || performance.now()) - introStart) / INTRO_MS);
+    const E = easeIO(it);
     const R = RAD();
-    spiral.style.transform = `rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10).toFixed(2)}deg)`;
-    const bend = Math.max(-18, Math.min(18, vel * 260));
+    spiral.style.transform = `rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10 + (1 - E) * -24).toFixed(2)}deg)`;
+    const bend = Math.max(-18, Math.min(18, vel * 260)) * E;
+    const spin = (1 - E) * -1.6;           // the whole helix swings into place
+
     for (let i = 0; i < N; i++) {
-      const o = wrapOffset(i - pos);
-      const ang = o * STEP;
+      const o = wrapOffset(i - pos - spin);
       const abs = Math.abs(o);
-      const el = cards[i];
+      // each card starts a touch later the further it is from the centre
+      const local = Math.max(0, Math.min(1, (it * INTRO_MS - Math.min(abs, 4) * 90) / (INTRO_MS - 360)));
+      const e = easeOut(local);
+      const ang = o * STEP * e;
       const vis = abs < N / 2 - 0.5;
-      const blur = Math.max(0, abs - 1.1) * 2.4;
-      el.style.transform = `rotateY(${ang.toFixed(2)}deg) translateZ(${R}px) translateY(${(o * DY).toFixed(1)}px) rotateY(${(-ang * 0.35).toFixed(2)}deg) skewY(${(bend * Math.sign(o || 1) * 0.3).toFixed(2)}deg) rotateZ(${(bend * 0.15).toFixed(2)}deg)`;
-      el.style.opacity = vis ? Math.max(0, 1 - Math.max(0, abs - 2.4) * 0.28).toFixed(3) : 0;
-      el.style.filter = blur > 0.1 ? `blur(${blur.toFixed(1)}px) brightness(${(1 - Math.min(0.55, abs * 0.1)).toFixed(2)})` : 'none';
-      el.style.zIndex = String(100 - Math.round(abs * 10));
-      el.style.pointerEvents = abs < 2.6 ? 'auto' : 'none';
+      const el = cards[i], c = cache[i];
+      const tr = `rotateY(${ang.toFixed(2)}deg) translateZ(${(R * (0.25 + 0.75 * e)).toFixed(1)}px) translateY(${(o * DY * e).toFixed(1)}px) rotateY(${(-ang * 0.35).toFixed(2)}deg) skewY(${(bend * Math.sign(o || 1) * 0.3).toFixed(2)}deg) rotateZ(${(bend * 0.15 + (1 - e) * o * 4).toFixed(2)}deg) scale(${(0.72 + 0.28 * e).toFixed(3)})`;
+      put(el, c, 't', 'transform', tr);
+      const op = vis ? Math.max(0, 1 - Math.max(0, abs - 2.4) * 0.28) * e : 0;
+      put(el, c, 'o', 'opacity', op.toFixed(2));
+      // blur stepped in 0.5px increments: far cheaper than a new filter every frame
+      const blur = Math.round(Math.max(0, abs - 1.1) * 2.4 * e * 2) / 2;
+      put(el, c, 'f', 'filter', blur > 0 ? `blur(${blur}px) brightness(${(1 - Math.min(0.5, Math.round(abs) * 0.1)).toFixed(1)})` : 'none');
+      put(el, c, 'z', 'zIndex', String(100 - Math.round(abs * 10)));
+      put(el, c, 'p', 'pointerEvents', abs < 2.6 && it >= 1 ? 'auto' : 'none');
     }
     const cur = ((Math.round(pos) % N) + N) % N;
     if (cur !== last) {
       last = cur;
-      const it = items[cur];
+      const item = items[cur];
       capIndex.textContent = String(cur + 1).padStart(2, '0') + ' / ' + String(N).padStart(2, '0');
-      capTitle.textContent = it.title;
-      capMeta.textContent = [it.client, it.kind].filter(Boolean).join(' · ');
+      capTitle.textContent = item.title;
+      capMeta.textContent = [item.client, item.kind].filter(Boolean).join(' · ');
       caption.classList.remove('swap'); void caption.offsetWidth; caption.classList.add('swap');
-      if (running && Sound.enabled) Sound.tick();
+      if (it >= 1) Sound.tick();
     }
   }
 
-  render();
+  function prepare() {
+    running = false;
+    introStart = -1;
+    wrap.style.transition = 'none';
+    wrap.style.opacity = '0';
+    caption.style.opacity = '0';
+  }
+  function enter() {
+    if (view === 'list') { running = true; return; }
+    target = pos = Math.round(target);
+    introStart = performance.now();
+    running = true;
+    wrap.style.transition = 'opacity .35s ease';
+    wrap.style.opacity = '1';
+    caption.style.transition = 'opacity .6s ease .9s';
+    caption.style.opacity = '';
+    // a soft "deal" as the nearest cards land
+    [0, 1, 2, 3, 4].forEach((k) => setTimeout(() => Sound.deal(k), 380 + k * 110));
+  }
+  function leave() { setTimeout(() => { running = false; }, 1300); }
+
+  requestAnimationFrame(render);
 
   // wheel / trackpad
   wrap.addEventListener('wheel', (e) => {
@@ -237,7 +277,20 @@ export function initFilm({ face }) {
     const id = ytId(it.url);
     media.className = 'fsheet-media' + (it.vertical ? ' vertical' : '');
     if (it.kindOf === 'photo') {
-      media.innerHTML = `<picture><source srcset="${it.full}" type="image/webp"><img src="${it.fullJpg}" alt="${it.title}" style="max-height:100%;width:auto;height:100%;object-fit:contain"></picture>`;
+      media.classList.add('photo');
+      media.innerHTML = `
+        <div class="fit-toggle" role="group" aria-label="Photo size">
+          <button class="is-on" data-fit="original" aria-pressed="true">original</button>
+          <button data-fit="full" aria-pressed="false">full width</button>
+        </div>
+        <picture><source srcset="${it.full}" type="image/webp"><img src="${it.fullJpg}" alt="${it.title}"></picture>`;
+      media.querySelectorAll('[data-fit]').forEach((b) => b.addEventListener('click', () => {
+        const full = b.dataset.fit === 'full';
+        media.classList.toggle('full', full);
+        media.querySelectorAll('[data-fit]').forEach((x) => { const on = x === b; x.classList.toggle('is-on', on); x.setAttribute('aria-pressed', on); });
+        Sound.click();
+        if (!full) panel.scrollTo({ top: 0, behavior: 'smooth' });
+      }));
     } else if (it.type === 'youtube' && id) {
       media.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="${it.title}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
     } else {
@@ -285,6 +338,7 @@ export function initFilm({ face }) {
 
   return {
     setActive(v) { running = v; if (v) { target = Math.round(target); } },
+    prepare, enter, leave,
     setView,
     closeSheet,
   };
