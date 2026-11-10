@@ -4,6 +4,14 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.2.0 — 2026-11-10 · Real research content
+- Research: full write-up of the TSMC FURI project on AlN RF Schottky diodes, built from the poster (question, results at a glance, method, device design, results figures, fabrication flow, benchmark table, poster + PDF)
+- NanoFab metrology training photo as the research cover
+- New Projects section (VisionForce, CATS) and Experience section (Fu Research Group, AKAI, Vodafone) from the resume
+- About and facts rewritten from the resume
+- Film side: spiral cards now render at true size, so photos and "still" labels are sharp
+- True Love now uses a frame from the reel instead of a repeated photo
+
 ## v1.1.0 — 2026-11-10
 - Removed the loading screen: the research side opens straight away
 - No background music; research side is silent; sound effects only on the film side (sound button shown there only)

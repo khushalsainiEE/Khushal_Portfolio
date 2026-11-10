@@ -1,7 +1,7 @@
 /* ============================================================
    MAIN — research side, the flip, menu, sheets, terminal.
    ============================================================ */
-import { PROFILE, RESEARCH, OTHER } from './content.js';
+import { PROFILE, RESEARCH, PROJECTS, EXPERIENCE } from './content.js';
 import { Sound } from './sound.js';
 import { Cursor } from './cursor.js';
 import { initFilm } from './film.js';
@@ -9,6 +9,8 @@ import { initFilm } from './film.js';
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// <picture> with webp + jpg fallback; path is given without extension
+const pic = (path, alt, attrs = '') => `<picture><source srcset="${path}.webp" type="image/webp"><img src="${path}.jpg" alt="${String(alt).replace(/"/g, '&quot;')}" loading="lazy" ${attrs}></picture>`;
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 let side = location.hash === '#film' ? 'film' : 'research';
@@ -120,21 +122,35 @@ $('#facts').innerHTML = PROFILE.facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><d
 // research rows
 $('#researchItems').innerHTML = RESEARCH.map((p, i) => `
   <article class="r-item reveal" data-rid="${p.id}">
-    <div class="r-media" data-cursor="open">
-      ${p.poster ? `<img src="${esc(p.poster)}" alt="${esc(p.title)} poster" loading="lazy">` : `<span class="r-wafer-ph"></span><span class="tag r-ph-note">poster coming soon</span>`}
-    </div>
+    <figure class="r-media" data-cursor="open">
+      ${p.cover ? pic(p.cover, p.coverCaption || p.title) : '<span class="r-wafer-ph"></span>'}
+      ${p.coverCaption ? `<figcaption class="tag r-ph-note">${esc(p.coverCaption)}</figcaption>` : ''}
+    </figure>
     <div class="r-body">
       <div class="r-title"><span class="num">(${String(i + 1).padStart(2, '0')})</span><h3><span class="chip">${esc(p.short)}</span></h3></div>
       <div class="r-tags">${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-      <p class="r-summary">${esc(p.summary)}</p>
-      <p class="r-meta">${esc(p.year)} · ${esc(p.lab)}</p>
-      <button class="pill r-open" data-open="${p.id}">open project <span class="arrow">→</span></button>
+      <p class="r-question">${esc(p.question)}</p>
+      ${p.stats ? `<dl class="r-stats">${p.stats.slice(0, 2).map((st) => `<div><dt>${esc(st.label)}</dt><dd>${esc(st.value)}</dd></div>`).join('')}</dl>` : ''}
+      <p class="r-meta">${esc(p.year)} · ${esc(p.lab)}${p.sponsor ? ' · ' + esc(p.sponsor) : ''}</p>
+      <button class="pill r-open" data-open="${p.id}">read the research <span class="arrow">→</span></button>
     </div>
   </article>`).join('');
-$$('[data-open], .r-media').forEach((el) => el.addEventListener('click', () => openResearch(el.closest('.r-item').dataset.rid)));
+$$('#researchItems [data-open], #researchItems .r-media').forEach((el) => el.addEventListener('click', () => openResearch(el.closest('.r-item').dataset.rid)));
 
-// other work
-$('#otherItems').innerHTML = OTHER.map((o) => `
+// project cards
+$('#projectItems').innerHTML = PROJECTS.map((p) => `
+  <article class="p-card reveal" data-pid="${p.id}">
+    <div class="p-top"><span class="mono-sm">${esc(p.year)}</span><span class="mono-sm">${esc(p.event)}</span></div>
+    <h3 class="p-title">${esc(p.title)}</h3>
+    <p class="p-sub">${esc(p.subtitle)}</p>
+    <p class="p-role">${esc(p.role)}</p>
+    <div class="r-tags">${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <button class="pill r-open" data-popen="${p.id}">details <span class="arrow">→</span></button>
+  </article>`).join('');
+$$('[data-popen]').forEach((el) => el.addEventListener('click', () => openProject(el.dataset.popen)));
+
+// experience
+$('#otherItems').innerHTML = EXPERIENCE.map((o) => `
   <li class="reveal"><span class="w-org">${esc(o.org)}</span><span class="w-role">${esc(o.role)}</span><span class="w-note">${esc(o.note)}</span><span class="w-year">${esc(o.year)}</span></li>`).join('');
 
 // contact + menu foot
@@ -320,45 +336,96 @@ $$('[data-close-menu]').forEach((b) => b.addEventListener('click', () => closeMe
    ============================================================ */
 const rsheet = $('#rsheet');
 const rbody = $('#rsheetBody');
+function showSheet() {
+  rsheet.classList.add('open');
+  rsheet.setAttribute('aria-hidden', 'false');
+  rbody.scrollTop = 0;
+  requestAnimationFrame(() => setTimeout(() => rsheet.classList.add('shown'), 120));
+}
+
 function openResearch(id) {
   const p = RESEARCH.find((x) => x.id === id);
   if (!p) return;
-  Sound.click();
-  const words2 = p.title.split(' ');
-  const titleHtml = words2.length > 1 ? `${esc(words2.slice(0, -1).join(' '))} <em>${esc(words2.at(-1))}</em>` : esc(p.title);
-  rbody.innerHTML = `
-    <div class="rs-top" style="--d:0"><span class="num">${esc(p.year)}</span>${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
-    <h2 class="rs-title" style="--d:1">${titleHtml}</h2>
-    <div class="rs-grid" style="--d:2">
-      <div>
-        <p class="rs-summary">${esc(p.summary)}</p>
-        <p class="rs-h">Key findings</p>
-        <ul class="rs-findings">${p.findings.map((f, i) => `<li><span>${String(i + 1).padStart(2, '0')}</span>${esc(f)}</li>`).join('')}</ul>
-        ${p.links.length ? `<div class="rs-links">${p.links.map((l) => `<a class="pill" href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join('')}</div>` : ''}
+  let d = 0;
+  const D = () => `style="--d:${d++}"`;
+  const sec = (x) => `
+    <section class="rs-sec" ${D()}>
+      <h3 class="rs-h">${esc(x.h)}</h3>
+      <div class="rs-sec-grid${x.fig ? '' : ' no-fig'}">
+        <ul class="rs-points">${x.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+        ${x.fig ? `<figure class="rs-fig">${pic(x.fig, x.figCaption)}<figcaption>${esc(x.figCaption)}</figcaption></figure>` : ''}
       </div>
-      <aside class="rs-side"><dl class="facts">
-        <div><dt>Lab</dt><dd>${esc(p.lab)}</dd></div>
-        <div><dt>When</dt><dd>${esc(p.year)}</dd></div>
-        <div><dt>Focus</dt><dd>${esc(p.tags.join(', '))}</dd></div>
-      </dl></aside>
+      ${x.fig2 ? `<figure class="rs-fig rs-fig--wide">${pic(x.fig2, x.fig2Caption)}<figcaption>${esc(x.fig2Caption)}</figcaption></figure>` : ''}
+    </section>`;
+  rbody.innerHTML = `
+    <div class="rs-top" ${D()}><span class="num">${esc(p.year)}</span>${p.tags.map((t) => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+    <h2 class="rs-title rs-title--long" ${D()}>${esc(p.title)}</h2>
+    <div class="rs-intro" ${D()}>
+      <div>
+        <p class="rs-q-label mono-sm">Research question</p>
+        <p class="rs-question">${esc(p.question)}</p>
+        <p class="rs-summary">${esc(p.summary)}</p>
+      </div>
+      <figure class="rs-cover">${pic(p.cover, p.coverCaption)}<figcaption>${esc(p.coverCaption)}</figcaption></figure>
     </div>
-    <p class="rs-h" style="--d:3">Poster</p>
-    ${p.poster ? `<figure class="rs-poster" style="--d:3"><img src="${esc(p.poster)}" alt="${esc(p.title)} research poster" loading="lazy"></figure>` : `<div class="rs-empty" style="--d:3">poster goes here — add the file path in js/content.js</div>`}
-    <p class="rs-h" style="--d:4">Figures</p>
-    ${p.images.length ? `<div class="rs-gallery" style="--d:4">${p.images.map((s) => `<img src="${esc(s)}" alt="" loading="lazy">`).join('')}</div>` : `<div class="rs-empty" style="--d:4">figures and lab photos go here</div>`}
+    <dl class="rs-stats" ${D()}>${p.stats.map((st) => `<div><dt>${esc(st.label)}</dt><dd>${esc(st.value)}</dd><p>${esc(st.note)}</p></div>`).join('')}</dl>
+    <dl class="facts rs-meta" ${D()}>
+      <div><dt>Group</dt><dd>${esc(p.lab)}</dd></div>
+      <div><dt>Mentor</dt><dd>${esc(p.mentor)}</dd></div>
+      <div><dt>Sponsor</dt><dd>${esc(p.sponsor)}</dd></div>
+    </dl>
+    ${p.sections.map(sec).join('')}
+    <section class="rs-sec" ${D()}>
+      <h3 class="rs-h">Proposed fabrication</h3>
+      <ol class="rs-steps">${p.fabrication.map((t) => `<li>${esc(t)}</li>`).join('')}</ol>
+      <p class="rs-note">${esc(p.fabricationNote)}</p>
+    </section>
+    <section class="rs-sec" ${D()}>
+      <h3 class="rs-h">Benchmark</h3>
+      <div class="rs-table-wrap"><table class="rs-table">
+        <thead><tr>${p.benchmark.head.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead>
+        <tbody>${p.benchmark.rows.map((r, i) => `<tr${i === p.benchmark.rows.length - 1 ? ' class="is-me"' : ''}>${r.map((c) => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>
+      </table></div>
+      <p class="rs-note">${esc(p.benchmark.note)}</p>
+    </section>
+    <section class="rs-sec" ${D()}>
+      <h3 class="rs-h">Next</h3>
+      <p class="rs-summary">${esc(p.next)}</p>
+    </section>
+    <section class="rs-sec" ${D()}>
+      <h3 class="rs-h">Poster</h3>
+      <a class="rs-poster" href="${esc(p.pdf)}" target="_blank" rel="noopener" aria-label="Open the full poster PDF">${pic(p.poster, p.title + ' research poster')}</a>
+      <div class="rs-links"><a class="pill" href="${esc(p.pdf)}" target="_blank" rel="noopener">open poster PDF ↗</a></div>
+      <p class="rs-note">${esc(p.thanks)}</p>
+    </section>
   `;
-  rsheet.classList.add('open', 'loading');
-  rsheet.setAttribute('aria-hidden', 'false');
-  rbody.scrollTop = 0;
-  setTimeout(() => {
-    rsheet.classList.remove('loading');
-    Sound.open();
-    setTimeout(() => rsheet.classList.add('shown'), 150);
-  }, reduced ? 0 : 750);
+  showSheet();
+}
+
+function openProject(id) {
+  const p = PROJECTS.find((x) => x.id === id);
+  if (!p) return;
+  let d = 0;
+  const D = () => `style="--d:${d++}"`;
+  rbody.innerHTML = `
+    <div class="rs-top" ${D()}><span class="num">${esc(p.year)}</span><span class="tag">${esc(p.event)}</span></div>
+    <h2 class="rs-title" ${D()}>${esc(p.title)}</h2>
+    <p class="rs-question" ${D()}>${esc(p.subtitle)}</p>
+    <dl class="facts rs-meta" ${D()}>
+      <div><dt>Role</dt><dd>${esc(p.role)}</dd></div>
+      <div><dt>Event</dt><dd>${esc(p.event)}</dd></div>
+      <div><dt>Built with</dt><dd>${esc(p.tags.join(' · '))}</dd></div>
+    </dl>
+    <section class="rs-sec" ${D()}>
+      <h3 class="rs-h">What I did</h3>
+      <ul class="rs-points">${p.points.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+    </section>
+    ${p.images.length ? `<section class="rs-sec" ${D()}><h3 class="rs-h">Photos</h3><div class="rs-gallery">${p.images.map((s) => pic(s, p.title)).join('')}</div></section>` : ''}
+  `;
+  showSheet();
 }
 function closeResearch() {
   if (!rsheet.classList.contains('open')) return;
-  Sound.close();
   rsheet.classList.remove('shown', 'open');
   rsheet.setAttribute('aria-hidden', 'true');
 }

@@ -37,7 +37,7 @@ function setThumb(img, item) {
 
 function buildItems() {
   const films = FILMS.map((f, i) => ({ ...f, kindOf: 'film', idx: i }));
-  const photos = PHOTOS.map((p) => ({ title: p.label, client: 'Photography', kind: 'Still', year: '', kindOf: 'photo', vertical: true, thumb: p.src + '-sm.webp', full: p.src + '.webp', fullJpg: p.src + '.jpg' }));
+  const photos = PHOTOS.map((p) => ({ title: p.label, client: 'Photography', kind: 'Still', year: '', kindOf: 'photo', vertical: true, thumb: p.src + '-md.webp', full: p.src + '.webp', fullJpg: p.src + '.jpg' }));
   // interleave photos among films so the spiral feels mixed
   const out = [];
   films.forEach((f, i) => { out.push(f); if (i % 3 === 2 && photos.length) out.push(photos.shift()); });
@@ -58,11 +58,16 @@ export function initFilm({ face }) {
 
   /* ---------- spiral ---------- */
   const N = items.length;
+  const PERSP = 1400;
+  const RAD = () => (window.innerWidth < 700 ? window.innerWidth * 0.5 : Math.min(560, Math.max(300, window.innerWidth * 0.33)));
+  const MAG = PERSP / (PERSP - RAD());   // how much the old layout magnified the front card
   const cards = items.map((it, i) => {
     const el = document.createElement('button');
     el.className = 's-card';
     el.setAttribute('aria-label', `${it.title} — ${it.kind}`);
-    const k = window.innerWidth < 700 ? 0.6 : 1;
+    // cards are built at the size they appear on screen (the spiral is pushed back by its
+    // radius so the front card sits at depth 0): text and photos render 1:1, never upscaled
+    const k = (window.innerWidth < 700 ? 0.6 : 1) * MAG;
     const w = Math.round((it.vertical ? 190 : 330) * k);
     const h = Math.round((it.vertical ? 300 : 200) * k);
     el.style.setProperty('--w', w + 'px');
@@ -84,8 +89,7 @@ export function initFilm({ face }) {
   });
 
   const STEP = 360 / Math.min(N, 12);   // degrees between cards
-  const RAD = () => (window.innerWidth < 700 ? window.innerWidth * 0.5 : Math.min(560, Math.max(300, window.innerWidth * 0.33)));
-  const DY = window.innerWidth < 700 ? 70 : 104;   // vertical rise per card
+  const DY = (window.innerWidth < 700 ? 70 : 104) * MAG;   // vertical rise per card
   let pos = 0, target = 0, vel = 0, last = -1;
   let mx = 0, my = 0, tmx = 0, tmy = 0;
   let running = false, raf = 0;
@@ -117,7 +121,7 @@ export function initFilm({ face }) {
     const it = introStart < 0 ? 1 : Math.min(1, ((now || performance.now()) - introStart) / INTRO_MS);
     const E = easeIO(it);
     const R = RAD();
-    spiral.style.transform = `rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10 + (1 - E) * -24).toFixed(2)}deg)`;
+    spiral.style.transform = `translateZ(${(-R).toFixed(1)}px) rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10 + (1 - E) * -24).toFixed(2)}deg)`;
     const bend = Math.max(-18, Math.min(18, vel * 260)) * E;
     const spin = (1 - E) * -1.6;           // the whole helix swings into place
 

@@ -41,7 +41,8 @@
   <nav class="hud-center hud-center--research" aria-label="Research sections">
     <a class="pill pill--soft" href="#about" data-goto="about">About</a>
     <a class="pill pill--soft" href="#research-list" data-goto="research-list">Research</a>
-    <a class="pill pill--soft" href="#work" data-goto="work">Work</a>
+    <a class="pill pill--soft" href="#projects" data-goto="projects">Projects</a>
+    <a class="pill pill--soft" href="#experience" data-goto="experience">Experience</a>
     <a class="pill pill--soft" href="#contact" data-goto="contact">Contact</a>
   </nav>
   <nav class="hud-center hud-center--film" aria-label="Film view">
@@ -90,7 +91,7 @@
           <h1 class="hero-chips" aria-label="Khushal Saini — electrical engineering, semiconductor research, film">
             <!-- chips injected by JS -->
           </h1>
-          <p class="hero-corner hero-corner--l">Researching since 2024 · Filming since 2022</p>
+          <p class="hero-corner hero-corner--l">Electrical Engineering · Arizona State University</p>
           <p class="hero-corner hero-corner--r"><span class="tag tag--yellow">tilt me</span> <span class="tag">move your mouse</span></p>
           <div class="scroll-cue" aria-hidden="true"><span>scroll</span><i></i></div>
         </div>
@@ -118,14 +119,22 @@
         <section class="research-list" id="research-list" aria-label="Research projects">
           <header class="section-head">
             <h2 class="display">Research</h2>
-            <p class="mono-sm">Click a project to open it</p>
+            <p class="mono-sm">Open the project for the full write-up and poster</p>
           </header>
           <div id="researchItems"></div>
         </section>
 
-        <section class="work" id="work" aria-label="Other work">
+        <section class="projects" id="projects" aria-label="Projects">
           <header class="section-head">
-            <h2 class="display">Other work</h2>
+            <h2 class="display">Projects</h2>
+            <p class="mono-sm">Hardware hackathons</p>
+          </header>
+          <div id="projectItems" class="p-grid"></div>
+        </section>
+
+        <section class="work" id="experience" aria-label="Experience">
+          <header class="section-head">
+            <h2 class="display">Experience</h2>
           </header>
           <ul id="otherItems" class="work-rows"></ul>
         </section>
@@ -192,7 +201,6 @@
 
 <!-- ========== RESEARCH PROJECT SHEET ========== -->
 <div id="rsheet" class="rsheet" aria-hidden="true">
-  <div class="rsheet-load"><span class="chip chip--light">LOADING</span><span class="chip chip--box">PLS</span><span class="chip chip--light">WAIT</span></div>
   <article class="rsheet-panel" role="dialog" aria-modal="true" aria-label="Research project">
     <button class="round-btn rsheet-close" data-close-rsheet aria-label="Close">×</button>
     <div class="rsheet-body" id="rsheetBody"></div>

@@ -1,30 +1,31 @@
 /* ============================================================
    CONTENT — the only file you need to edit to change words,
    links, research projects and videos on the site.
-   Anything marked  TODO  is a placeholder waiting for real info.
+   Images: give the path without the extension; .webp and .jpg are used.
    ============================================================ */
 
 export const PROFILE = {
   first: 'Khushal',
   last: 'Saini',
-  roles: ['Electrical Engineering', 'Semiconductor Research', 'Film & Edit'],
   school: 'Arizona State University',
   email: 'khushalsaini9636@gmail.com',
   photo: 'assets/img/me',            // .webp + .jpg are both provided
   // Big statement under the hero. Wrap words in [[ ]] to turn them into a coloured chip.
   statement:
-    'Half my week is spent on [[ultra-wide-bandgap]] semiconductors — materials built to survive the voltages and heat that would cook silicon. The other half is spent behind a [[camera]], cutting films for the people and communities building cool things.',
-  // TODO: replace with your own words (2–3 sentences).
+    'I design [[aluminum nitride]] diodes in simulation, built to be fast enough for radio and tough enough for high power. Away from the lab I work behind a [[camera]], shooting and cutting films for the communities around me.',
   bio: [
-    'I study electrical engineering at Arizona State University, where I research ultra-wide-bandgap semiconductors — materials that can handle far more power, heat and voltage than silicon.',
-    'When I’m not in the lab I’m behind a camera: shooting and cutting films for tech communities, hackathons and anyone with a story worth telling.',
+    'I’m an electrical engineering senior at Arizona State University and a TSMC FURI award recipient. In the Fu Research Group I research ultrawide-bandgap aluminum nitride Schottky diodes for radio-frequency use.',
+    'My work combines Silvaco TCAD device simulation with cleanroom training at the ASU NanoFab. Before that I interned in industrial acceptance testing at AKAI and in RF network operations at Vodafone.',
+    'Outside engineering I shoot and edit video for tech communities and campus events. That’s the other side of this site.',
   ],
   facts: [
-    ['Based', 'Arizona'],
-    ['Studying', 'Electrical Engineering @ ASU'],     // TODO confirm
-    ['Research', 'Ultra-wide-bandgap semiconductors'], // TODO confirm
-    ['Tools', 'TODO: e.g. COMSOL · Python · SEM · XRD'],
-    ['Edit', 'Premiere Pro · After Effects · DaVinci Resolve'],
+    ['Based', 'Tempe, Arizona'],
+    ['Studying', 'B.S.E. Electrical Engineering, minor in Business · ASU, 2023 — 2027'],
+    ['Research', 'UWBG AlN RF Schottky diodes · Fu Research Group'],
+    ['Award', 'TSMC FURI cohort'],
+    ['Simulation', 'Silvaco TCAD · LTspice · MATLAB · Python'],
+    ['Cleanroom', 'ASU NanoFab Class 100 · wet bench · DekTak · Filmetrics F20/F40 · Woollam VASE'],
+    ['Hardware', 'ESP32 · Arduino · SystemVerilog · AutoCAD'],
   ],
   socials: [
     { label: 'LinkedIn', short: 'in', url: 'https://linkedin.com/in/khushal-saini1' },
@@ -35,47 +36,137 @@ export const PROFILE = {
 };
 
 /* ---------- RESEARCH ----------
-   Each project gets a numbered section and its own detail page.
-   images: put files in assets/research/ and list them here.      */
+   Each project gets a row on the page and its own detail page.
+   Put images in assets/research/ (give the path without .webp/.jpg).  */
 export const RESEARCH = [
   {
-    id: 'uwbg',
-    title: 'Ultra-Wide-Bandgap Semiconductors',
-    short: 'UWBG Research',
-    year: '2025 — Now',
-    tags: ['Materials', 'Power Electronics', 'Device Physics', 'Characterization'],
-    lab: 'TODO: Lab name · Advisor name',
+    id: 'aln-rf',
+    title: 'Ultrawide-Bandgap Aluminum Nitride Diodes for High-Frequency Radio',
+    short: 'AlN RF Diodes',
+    year: 'Feb 2026 — Now',
+    tags: ['UWBG', 'AlN', 'Schottky diodes', 'RF', 'Silvaco TCAD'],
+    lab: 'Fu Research Group · ASU',
+    mentor: 'Dr. Houqiang Fu, Assistant Professor',
+    sponsor: 'TSMC · FURI',
+    cover: 'assets/research/nanofab-metrology',
+    coverCaption: 'Metrology suite training at the ASU NanoFab',
+    question:
+      'Can simulation-guided redesign turn an aluminum nitride (AlN) Schottky diode built for power electronics into one fast enough for radio-frequency use?',
     summary:
-      'TODO: One or two sentences on the question this research answers. (Waiting on files from the UWBG research project.)',
-    findings: [
-      'TODO: Key finding #1',
-      'TODO: Key finding #2',
-      'TODO: Key finding #3',
+      '5G/6G and satellite links need diodes that are both fast and high-power. AlN has a 6.2 eV bandgap and a 12–15 MV/cm critical field, but the lab’s AlN diode was designed for power switching and reaches only 0.42 GHz. I rebuilt it in Silvaco TCAD and redesigned it step by step for RF.',
+    stats: [
+      { label: 'Cutoff frequency', value: '0.42 → 42.7 GHz', note: '~100× the lab’s diode' },
+      { label: 'Junction capacitance', value: '2 pF → 2 fF', note: '~1000× smaller junction' },
+      { label: 'Breakdown', value: '≥ 38 V', note: 'no breakdown observed; ~2× the GaN SBD' },
+      { label: 'fc × breakdown', value: '~3×', note: 'vs published GaN and GaAs RF diodes' },
     ],
-    poster: null,          // e.g. 'assets/research/uwbg-poster.webp'
-    images: [],            // e.g. ['assets/research/fig1.webp', ...]
-    links: [],             // e.g. [{ label: 'Poster PDF', url: 'assets/research/poster.pdf' }]
-  },
-  {
-    id: 'project-2',
-    title: 'TODO: Second research or lab project',
-    short: 'Project Two',
-    year: 'TODO',
-    tags: ['TODO', 'Tags'],
-    lab: 'TODO',
-    summary: 'TODO: Short description.',
-    findings: ['TODO'],
-    poster: null,
-    images: [],
-    links: [],
+    sections: [
+      {
+        h: 'Why ultrawide bandgap',
+        fig: 'assets/research/fig-uwbg-bandgap',
+        figCaption: 'Breakdown field vs bandgap. AlN sits at the top of the curve.',
+        points: [
+          'UWBG materials have higher breakdown fields and lower leakage than Si, GaAs or GaN.',
+          'AlN has roughly 5× GaN’s Johnson figure of merit, the measure that trades speed against voltage.',
+        ],
+      },
+      {
+        h: 'Method',
+        points: [
+          'Baseline: the lab’s AlN/AlGaN diode modelled in Silvaco TCAD on ASU’s Sol supercomputer.',
+          'Calibration: matched to measured data, with resistance within ~25%.',
+          'Redesign: AlN thickness and doping, anode shape and size.',
+          'Evaluation: cutoff frequency from DC, AC and charge, plus a breakdown sweep.',
+          'Stress tests: donor activation, contacts and field plates.',
+        ],
+      },
+      {
+        h: 'Final device',
+        fig: 'assets/research/fig-device-design',
+        figCaption: 'Cross-section and top view: 1.5 µm circular Ni/Au anode, ring cathode, 4.5 µm mesa.',
+        points: [
+          'A fully depleted 75 nm AlN layer acts as the capacitor’s dielectric, so the junction capacitance falls to about 2 fF.',
+          'A 1.5 µm circular anode keeps the junction area small.',
+          'An n⁺ AlGaN layer carries current sideways to a ring cathode.',
+        ],
+      },
+      {
+        h: 'Results',
+        fig: 'assets/research/fig-fc-steps',
+        figCaption: 'Forward cutoff frequency across seven design steps, from 0.42 GHz to 42.7 GHz (log scale).',
+        fig2: 'assets/research/fig-iv-impedance',
+        fig2Caption: '(a) I–V: no breakdown down to −37.8 V (19.5 pA). (b) Impedance: capacitive when off, ~1.6 kΩ when on.',
+        points: [
+          'Forward cutoff frequency stays within ~3% and junction capacitance within ~5% at only 10% donor activation.',
+        ],
+      },
+    ],
+    fabrication: [
+      'Mesa etch down to the AlGaN layer',
+      'Ti/Al/Ti ring cathode + anneal',
+      'Ni/Au anode (Ø 1.5 µm) by lift-off',
+      'SiO₂ deposition',
+      'Air bridge and probe pads',
+      'HF removal of the SiO₂ underneath',
+    ],
+    fabricationNote: 'The air bridge links the tiny anode to large probe pads while adding very little capacitance.',
+    benchmark: {
+      head: ['Device', 'fc (0 V)', 'Breakdown', 'fc × V'],
+      rows: [
+        ['GaAs SBD [1]', '1.3 THz', '10 V', '13 THz·V'],
+        ['GaN SBD [2]', '0.59 THz', '18 V', '11 THz·V'],
+        ['This work: AlN (simulated)', '0.95 THz', '≥ 38 V', '≥ 36 THz·V'],
+      ],
+      note: 'Zero-bias fc and breakdown of published RF diodes. This work is simulated and intrinsic; pads and transit time will lower measured fc.',
+    },
+    next: 'Fabricate the device and measure I–V, C–V and RF performance.',
+    thanks: 'Thanks to Dr. Houqiang Fu and PhD mentor Bingcheng Da for mentorship and measured device data, and to ASU Research Computing (Sol), Silvaco and FURI.',
+    poster: 'assets/research/furi-poster',
+    pdf: 'assets/research/saini-furi-poster.pdf',
   },
 ];
 
-/* ---------- OTHER WORK (orgs, roles, builds) ---------- */
-export const OTHER = [
-  { org: 'DevLabs', role: 'Videographer & Editor', year: '2023 — Now', note: 'Org films, event coverage, promos and short-form.' },
-  { org: 'HackerDevils @ ASU', role: 'Media Lead', year: '2023 — Now', note: 'Hackathon films and meeting branding.' }, // TODO role title
-  { org: 'Freelance', role: 'Event Photography', year: '2022 — Now', note: 'Concerts, campus events and portraits.' },
+/* ---------- PROJECTS ---------- */
+export const PROJECTS = [
+  {
+    id: 'visionforce',
+    title: 'VisionForce',
+    subtitle: 'Edge-controlled electromagnetic system',
+    event: 'StarHacks Hardware Hackathon',
+    role: 'Embedded Systems Lead',
+    year: 'Spring 2026',
+    tags: ['ESP32-S3', 'Wi-Fi firmware', 'OpenCV', 'Power design'],
+    points: [
+      'Built the edge-controlled actuation system on an ESP32-S3 and wrote its Wi-Fi control firmware, linked to the team’s Python OpenCV target-tracking pipeline.',
+      'Designed a dual-voltage power system: an LM2596 buck converter powers the ESP32, and a 5 V relay switches the electromagnet on a shared ground.',
+    ],
+    images: [],   // e.g. ['assets/projects/visionforce-1']
+  },
+  {
+    id: 'cats',
+    title: 'CATS',
+    subtitle: 'Capstan Actuated Tilt System for jet engine inlet guide vanes',
+    event: 'Devils Invent Hackathon',
+    role: 'Hardware & Embedded Software Lead',
+    year: 'Fall 2025',
+    tags: ['Arduino', 'Servo control', '3D printing', 'Mechatronics'],
+    points: [
+      'Designed the electrical control system for a capstan mechanism that replaces the gear assembly in jet engine Variable Inlet Guide Vanes.',
+      'Programmed Arduino code mapping input commands to servo positions that tilt the vanes.',
+      'Built and tested a 3D-printed prototype. Team analysis projected a 94.5% mass reduction, 6.7× MTBF and 35% cost savings over gears.',
+    ],
+    images: [],
+  },
+];
+
+/* ---------- EXPERIENCE ---------- */
+export const EXPERIENCE = [
+  { org: 'Fu Research Group, ASU', role: 'Undergraduate Researcher', year: 'Feb 2026 — Now',
+    note: 'Simulating and optimizing AlN Schottky diodes in Silvaco TCAD for RF; NanoFab cleanroom, wet bench and metrology training; planning the fabrication and RF test run. Sponsored by TSMC (FURI).' },
+  { org: 'AKAI · Adage Kanoo Analytical Industry', role: 'Electrical Engineering Intern', year: 'May — Jul 2026',
+    note: 'Integrated factory acceptance testing, leak testing and root-cause analysis on gas chromatograph systems; 3D AutoCAD models for control systems; BOM and spec audits.' },
+  { org: 'Vodafone', role: 'RF / Telecom Intern', year: 'Aug 2022',
+    note: 'Shadowed engineers analyzing base station subsystem configurations, logging frequency allocation data and supporting network troubleshooting.' },
 ];
 
 /* ---------- FILM SIDE ----------
@@ -101,7 +192,7 @@ export const FILMS = [
   { title: 'Anime Edit', client: 'Personal', kind: 'Creative Edit', year: '2023', type: 'youtube', url: 'https://youtu.be/PI9cmjUz1-Q', vertical: false,
     blurb: 'A personal rhythm-driven edit.' },
   { title: 'True Love', client: 'Personal', kind: 'Featured Film', year: '2024', type: 'external', platform: 'Instagram', url: 'https://www.instagram.com/reel/C7ra5A1PWKy/', vertical: true,
-    thumb: 'assets/img/event-devil-palooza-sm.webp', // TODO: replace with a still from the film
+    thumb: 'assets/img/film-true-love-md.webp',   // a frame from the reel (0:27)
     blurb: 'A short film — opens on Instagram.' },
 ];
 
