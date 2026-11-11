@@ -4,6 +4,13 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.3.1 — 2026-11-10
+- Top bar: clear over the hero, frosted once you scroll, slides away while scrolling down and returns on scroll up
+- Experience: dark section that flows into the flip; columns line up on every row (dates in a fixed right-aligned column)
+- Contact: more room, footer pinned to the bottom
+- Flip coin: two real faces, so the colour changes exactly as it turns edge-on; hover adds a smooth half-turn instead of speeding the loop up
+- Spiral: spacing tightened to halfway between the last two versions
+
 ## v1.3.0 — 2026-11-10
 - Film viewer: the close button stays pinned at the top right however far you scroll (original and full width)
 - Spiral: wider spacing so neighbouring cards keep a small gap and switching between landscape and portrait is smoother

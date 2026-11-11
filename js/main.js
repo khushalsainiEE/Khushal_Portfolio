@@ -199,6 +199,19 @@ const hero = $('.hero');
 const statement = $('.statement');
 const navPills = $$('.hud-center--research .pill');
 const sections = navPills.map((p) => document.getElementById(p.dataset.goto));
+// top bar: transparent over the hero, solid once you scroll; slides away while
+// scrolling down and comes back as soon as you scroll up
+let lastY = 0;
+scroller.addEventListener('scroll', () => {
+  const yy = scroller.scrollTop;
+  document.body.classList.toggle('hud-solid', yy > 40);
+  if (Math.abs(yy - lastY) > 6) {
+    const away = yy > lastY && yy > window.innerHeight * 0.6 && !menu.classList.contains('open');
+    document.body.classList.toggle('hud-away', away);
+    lastY = yy;
+  }
+}, { passive: true });
+
 scroller.addEventListener('scroll', () => {
   const y = scroller.scrollTop;
   const h = hero.offsetHeight;
@@ -319,6 +332,7 @@ $$('.menu-links a').forEach((a, li) => {
   });
 });
 function openMenu() {
+  document.body.classList.remove('hud-away');
   menu.classList.add('open'); menu.setAttribute('aria-hidden', 'false'); menuBtn.setAttribute('aria-expanded', 'true');
   $$('.menu-links a').forEach((a) => a.classList.toggle('is-current', a.dataset.menu === side));
   Sound.open();

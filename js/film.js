@@ -68,9 +68,9 @@ export function initFilm({ face }) {
     el.setAttribute('aria-label', `${it.title} — ${it.kind}`);
     // cards are built at the size they appear on screen (the spiral is pushed back by its
     // radius so the front card sits at depth 0): text and photos render 1:1, never upscaled
-    const k = (window.innerWidth < 700 ? 0.56 : 0.82) * MAG;
-    const w = Math.round((it.vertical ? 190 : 300) * k);
-    const h = Math.round((it.vertical ? 300 : 186) * k);
+    const k = (window.innerWidth < 700 ? 0.58 : 0.84) * MAG;
+    const w = Math.round((it.vertical ? 190 : 302) * k);
+    const h = Math.round((it.vertical ? 300 : 187) * k);
     el.style.setProperty('--w', w + 'px');
     el.style.setProperty('--h', h + 'px');
     const img = document.createElement('img');
@@ -89,9 +89,9 @@ export function initFilm({ face }) {
     return el;
   });
 
-  // spacing tuned so neighbouring cards keep a small gap (≈10–80 px on laptop/desktop screens)
-  const STEP = 42;                                           // degrees between cards
-  const DY = (window.innerWidth < 700 ? 108 : 168) * MAG;   // vertical rise per card
+  // spacing tuned so neighbouring cards sit just apart (about −10 to +60 px on laptop/desktop screens)
+  const STEP = 40;                                           // degrees between cards
+  const DY = (window.innerWidth < 700 ? 100 : 158) * MAG;   // vertical rise per card
   let pos = 0, target = 0, vel = 0, last = -1;
   let mx = 0, my = 0, tmx = 0, tmy = 0;
   let running = false, raf = 0;
