@@ -11,6 +11,13 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // <picture> with webp + jpg fallback; path is given without extension
 const pic = (path, alt, attrs = '') => `<picture><source srcset="${path}.webp" type="image/webp"><img src="${path}.jpg" alt="${String(alt).replace(/"/g, '&quot;')}" loading="lazy" ${attrs}></picture>`;
+// brand marks for the social links (single-colour, inherit the text colour)
+const ICONS = {
+  LinkedIn: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9.5h4V21H3V9.5zm6.5 0h3.8v1.6h.06c.53-1 1.83-2.06 3.77-2.06 4.03 0 4.77 2.65 4.77 6.1V21h-4v-5.1c0-1.22-.02-2.79-1.7-2.79-1.7 0-1.96 1.33-1.96 2.7V21h-4V9.5z"/></svg>',
+  Instagram: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.4" cy="6.6" r="1.2" fill="currentColor" stroke="none"/></svg>',
+  YouTube: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M23 7.2a3 3 0 0 0-2.1-2.1C19 4.6 12 4.6 12 4.6s-7 0-8.9.5A3 3 0 0 0 1 7.2C.5 9.1.5 12 .5 12s0 2.9.5 4.8a3 3 0 0 0 2.1 2.1c1.9.5 8.9.5 8.9.5s7 0 8.9-.5a3 3 0 0 0 2.1-2.1c.5-1.9.5-4.8.5-4.8s0-2.9-.5-4.8zM9.75 15.3V8.7L15.6 12l-5.85 3.3z"/></svg>',
+  GitHub: '<svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>',
+};
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 let side = location.hash === '#film' ? 'film' : 'research';
@@ -157,8 +164,8 @@ $('#otherItems').innerHTML = EXPERIENCE.map((o) => `
 const mail = $('#mailLink');
 mail.href = 'mailto:' + PROFILE.email; mail.textContent = PROFILE.email;
 const mm = $('#menuMail'); mm.href = 'mailto:' + PROFILE.email; mm.textContent = PROFILE.email;
-$('#socials').innerHTML = PROFILE.socials.map((s) => `<a href="${s.url}" target="_blank" rel="noopener">${s.label} ↗</a>`).join('');
-$('#menuSocials').innerHTML = PROFILE.socials.map((s) => `<a href="${s.url}" target="_blank" rel="noopener" aria-label="${s.label}">${s.short}</a>`).join('');
+$('#socials').innerHTML = PROFILE.socials.map((s) => `<a href="${s.url}" target="_blank" rel="noopener">${ICONS[s.label] || ''}${s.label} ↗</a>`).join('');
+$('#menuSocials').innerHTML = PROFILE.socials.map((s) => `<a href="${s.url}" target="_blank" rel="noopener" aria-label="${s.label}" title="${s.label}">${ICONS[s.label] || s.short}</a>`).join('');
 $('#yr').textContent = new Date().getFullYear();
 
 /* ============================================================

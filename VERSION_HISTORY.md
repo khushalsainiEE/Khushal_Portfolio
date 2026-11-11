@@ -4,6 +4,11 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.3.2 — 2026-11-10
+- Contact fills the screen, so the bottom of the page never shows the dark band above it
+- Flip coin: flowing colours are back, playing forward then in reverse (no jump); the back face mirrors the front, so turning looks like the colours reversing
+- Social links show LinkedIn, Instagram, YouTube and GitHub logos instead of initials (menu and contact)
+
 ## v1.3.1 — 2026-11-10
 - Top bar: clear over the hero, frosted once you scroll, slides away while scrolling down and returns on scroll up
 - Experience: dark section that flows into the flip; columns line up on every row (dates in a fixed right-aligned column)
