@@ -4,6 +4,13 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.4.0 — 2026-11-12 · VHS
+- New third film view, **vhs**: a shelf of cassettes (thumbnail on the label, title on masking tape; stills in a light shell with a STILL stamp)
+- Drag a tape into the VCR, or click it: tape lines up over the slot, the flap opens, it slides in, clunk, static, then it plays on the CRT
+- Beige CRT TV with power-on/off, scanlines, glass, blue "INSERT TAPE" screen and on-screen display; VCR with slot, LCD counter and eject / play / watch large
+- Photo tapes open in a retro picture window on the TV: zoom in/out, fit, drag to pan, close ejects
+- New sounds (film side only): pick up, insert + motor, clunk, static, eject, TV on/off
+
 ## v1.3.2 — 2026-11-10
 - Contact fills the screen, so the bottom of the page never shows the dark band above it
 - Flip coin: flowing colours are back, playing forward then in reverse (no jump); the back face mirrors the front, so turning looks like the colours reversing

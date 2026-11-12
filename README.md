@@ -29,6 +29,7 @@ css/style.css     all styling
 js/content.js     ← your content (edit this)
 js/main.js        loader, research side, flip, menu, terminal
 js/film.js        film side: spiral, list, video sheet
+js/vhs.js         film side: VHS view (tapes, TV, VCR, photo window)
 js/wafer.js       the 3D silicon wafer (three.js)
 js/sound.js       all sounds, generated live (no audio files)
 js/cursor.js      custom cursor
@@ -39,6 +40,7 @@ assets/img/       photos (optimised)
 
 - Press `/` for a command terminal (`help`, `spin`, `invert`, `bw`, `reset`…)
 - Press `F` to flip sides. Arrow keys move the film spiral.
+- Film side has three views: spiral, list and vhs (drag a tape into the VCR).
 - `yoursite.com/#film` opens straight on the film side.
 
 ## Preview on your computer

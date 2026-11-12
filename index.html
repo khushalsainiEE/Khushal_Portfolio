@@ -13,7 +13,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Pixelify+Sans:wght@400..700&family=Permanent+Marker&family=VT323&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 
 <script type="importmap">
@@ -49,6 +49,8 @@
     <button class="view-btn is-active" data-view="spiral">spiral</button>
     <i class="sep"></i>
     <button class="view-btn" data-view="list">list</button>
+    <i class="sep"></i>
+    <button class="view-btn" data-view="vhs">vhs</button>
   </nav>
 
   <div class="hud-right">
@@ -170,6 +172,65 @@
       <div class="film-list" id="filmList" hidden>
         <ul id="filmListItems"></ul>
         <div class="list-preview" id="listPreview" aria-hidden="true"><img alt=""></div>
+      </div>
+
+      <!-- VHS view: drag a tape into the VCR and it plays on the CRT -->
+      <div class="vhs" id="vhs" hidden>
+        <div class="vhs-shelf" id="vhsShelf" role="group" aria-label="Tapes. Drag one into the VCR, or press it."></div>
+
+        <div class="vhs-rig" id="vhsRig">
+          <div class="tv" id="tv">
+            <div class="tv-body">
+              <div class="tv-bezel">
+                <div class="tv-screen" id="tvScreen">
+                  <div class="tv-picture" id="tvPicture">
+                    <div class="tv-layer tv-blue" id="tvBlue">
+                      <span class="osd osd-tl">CH 03</span>
+                      <span class="osd osd-tr">VIDEO</span>
+                      <div class="tv-blue-mid"><b>INSERT TAPE</b><span>drag a tape into the VCR</span></div>
+                      <span class="osd osd-bl">KS VISION</span>
+                    </div>
+                    <div class="tv-layer tv-content" id="tvContent"></div>
+                    <canvas class="tv-layer tv-static" id="tvStatic" width="128" height="96"></canvas>
+                    <div class="tv-layer tv-osd" id="tvOsd" aria-hidden="true">
+                      <span class="osd osd-tl" id="osdTl">PLAY ▶</span>
+                      <span class="osd osd-tr">SP</span>
+                      <span class="osd osd-bl" id="osdBl"></span>
+                    </div>
+                  </div>
+                  <div class="tv-crt" aria-hidden="true"></div>
+                </div>
+              </div>
+              <div class="tv-chin">
+                <span class="tv-brand">KS&middot;VISION</span>
+                <span class="tv-grille" aria-hidden="true"></span>
+                <span class="tv-knobs" aria-hidden="true"><i></i><i></i></span>
+                <span class="tv-led" aria-hidden="true"></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="vcr" id="vcr">
+            <div class="vcr-slot" id="vcrSlot" aria-hidden="true"><i class="vcr-flap"></i></div>
+            <div class="vcr-lcd" aria-live="polite"><span id="vcrText">--:--</span></div>
+            <div class="vcr-btns">
+              <button class="vcr-btn" data-vhs="eject" aria-label="Eject tape" title="Eject">⏏</button>
+              <button class="vcr-btn" data-vhs="play" aria-label="Play" title="Play">▶</button>
+              <button class="vcr-btn" data-vhs="big" aria-label="Watch large" title="Watch large">⤢</button>
+            </div>
+            <span class="vcr-brand">VIDEO CASSETTE RECORDER · SP/LP</span>
+            <span class="vcr-power" aria-hidden="true"></span>
+          </div>
+          <div class="vhs-floor" aria-hidden="true"></div>
+
+          <div class="vhs-now" id="vhsNow">
+            <p class="vhs-now-text" id="vhsNowText">drag a tape into the VCR, or click one</p>
+            <div class="vhs-now-btns">
+              <button class="pill vhs-pill" data-vhs="eject">eject ⏏</button>
+              <button class="pill vhs-pill" data-vhs="big">watch large ⤢</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="film-caption" aria-hidden="true">

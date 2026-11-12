@@ -7,6 +7,7 @@ import { FILMS, PHOTOS, SHOWREEL } from './content.js';
 import { Sound } from './sound.js';
 import { Cursor } from './cursor.js';
 import { initPulse } from './pulse.js';
+import { initVhs } from './vhs.js';
 
 export function ytId(url) {
   const m = String(url).match(/(?:youtu\.be\/|v=|shorts\/|embed\/)([\w-]{11})/);
@@ -97,6 +98,7 @@ export function initFilm({ face }) {
   let running = false, raf = 0;
   let dragMoved = 0;
   let view = 'spiral';
+  let vhs = null;
   // intro: cards unfold from a tight stack into the spiral, centre card first
   let introStart = -1;
   const INTRO_MS = 1500;
@@ -113,7 +115,7 @@ export function initFilm({ face }) {
 
   function render(now) {
     raf = requestAnimationFrame(render);
-    if (!running) return;
+    if (!running || view !== 'spiral') return;
     const prev = pos;
     pos += (target - pos) * 0.085;
     vel += ((pos - prev) - vel) * 0.25;
@@ -165,12 +167,14 @@ export function initFilm({ face }) {
   function prepare() {
     running = false;
     introStart = -1;
+    vhs && vhs.prepare();
     wrap.style.transition = 'none';
     wrap.style.opacity = '0';
     caption.style.opacity = '0';
   }
   function enter() {
     if (view === 'list') { running = true; return; }
+    if (view === 'vhs') { running = true; vhs.show(); return; }
     target = pos = Math.round(target);
     introStart = performance.now();
     running = true;
@@ -181,7 +185,10 @@ export function initFilm({ face }) {
     // a soft "deal" as the nearest cards land
     [0, 1, 2, 3, 4].forEach((k) => setTimeout(() => Sound.deal(k), 380 + k * 110));
   }
-  function leave() { setTimeout(() => { running = false; }, 1300); }
+  function leave() {
+    if (view === 'vhs') vhs.hide();          // stop the TV straight away
+    setTimeout(() => { running = false; }, 1300);
+  }
 
   requestAnimationFrame(render);
 
@@ -217,7 +224,7 @@ export function initFilm({ face }) {
   wrap.addEventListener('wheel', () => { clearTimeout(snapT); snapT = setTimeout(() => (target = Math.round(target)), 220); }, { passive: true });
 
   window.addEventListener('keydown', (e) => {
-    if (!running || document.querySelector('.fsheet.open, .menu.open, .term.open')) return;
+    if (!running || view !== 'spiral' || document.querySelector('.fsheet.open, .menu.open, .term.open')) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { target = Math.round(target) + 1; }
     if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { target = Math.round(target) - 1; }
     if (e.key === 'Enter' && view === 'spiral') { const i = ((Math.round(pos) % N) + N) % N; openSheet(items[i], cards[i]); }
@@ -259,18 +266,25 @@ export function initFilm({ face }) {
 
   function setView(v) {
     if (v === view) return;
+    const prev = view;
     view = v;
     document.querySelectorAll('.view-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.view === v));
     face.classList.toggle('view-list', v === 'list');
-    if (v === 'list') {
-      wrap.style.transition = 'opacity .5s'; wrap.style.opacity = '0'; wrap.style.pointerEvents = 'none';
-      listEl.hidden = false; listEl.classList.remove('in'); void listEl.offsetWidth; listEl.classList.add('in');
-      Sound.enabled && Sound.whoosh();
-    } else {
-      listEl.hidden = true; preview.classList.remove('on');
-      wrap.style.opacity = '1'; wrap.style.pointerEvents = '';
-      Sound.enabled && Sound.whoosh();
-    }
+    face.classList.toggle('view-vhs', v === 'vhs');
+    document.body.classList.toggle('film-vhs', v === 'vhs');
+    Cursor.tag(null);
+    // spiral
+    wrap.style.transition = 'opacity .5s';
+    wrap.style.opacity = v === 'spiral' ? '1' : '0';
+    wrap.style.pointerEvents = v === 'spiral' ? '' : 'none';
+    if (v === 'spiral') target = Math.round(target);
+    // list
+    if (v === 'list') { listEl.hidden = false; listEl.classList.remove('in'); void listEl.offsetWidth; listEl.classList.add('in'); }
+    else { listEl.hidden = true; preview.classList.remove('on'); }
+    // vhs
+    if (v === 'vhs') vhs.show();
+    else if (prev === 'vhs') vhs.hide();
+    Sound.whoosh();
   }
   document.querySelectorAll('.view-btn').forEach((b) => b.addEventListener('click', () => { Sound.click(); setView(b.dataset.view); }));
 
@@ -354,6 +368,22 @@ export function initFilm({ face }) {
   const rid = ytId(SHOWREEL.url);
   if (rid) rt.style.backgroundImage = `url(https://i.ytimg.com/vi/${rid}/hqdefault.jpg)`;
   badge.addEventListener('click', () => openSheet(reelItem, rt));
+
+  /* ---------- VHS view ---------- */
+  const vhsRoot = face.querySelector('#vhs');
+  vhs = initVhs({
+    root: vhsRoot,
+    items,
+    setThumb, ytId, openSheet,
+    thumbFor: (it) => thumbSources(it)[0] || '',
+  });
+  // the heartbeat works on the empty floor of the VHS view too
+  vhsRoot.addEventListener('click', (e) => {
+    if (e.target !== vhsRoot) return;
+    const r = face.getBoundingClientRect();
+    pulse.beat(e.clientX - r.left, e.clientY - r.top);
+    Sound.beat();
+  });
 
   return {
     setActive(v) { running = v; if (v) { target = Math.round(target); } },

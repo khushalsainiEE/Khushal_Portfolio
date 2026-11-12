@@ -122,6 +122,38 @@ export const Sound = {
     tone({ freq: 110, a: 0.05, d: 0.9, peak: 0.25, glide: 0.5, delay: 0.5, force });
     tone({ freq: 880, type: 'triangle', a: 0.005, d: 0.4, peak: 0.06, glide: 1.5, delay: 0.55, force });
   },
+  /* ---------- VHS ---------- */
+  /** picking a tape up off the shelf */
+  pickup() {
+    tone({ freq: 1500, type: 'triangle', a: 0.001, d: 0.03, peak: 0.06 });
+    noise({ a: 0.001, d: 0.03, peak: 0.05, f0: 4200, f1: 2600, q: 2 });
+  },
+  /** tape sliding in + the transport motor spinning up */
+  insert() {
+    noise({ a: 0.02, d: 0.26, peak: 0.12, f0: 900, f1: 2600, q: 1.2 });
+    tone({ freq: 52, type: 'sawtooth', a: 0.08, d: 0.85, peak: 0.045, glide: 1.25, delay: 0.24 });
+    noise({ a: 0.08, d: 0.7, peak: 0.03, f0: 240, f1: 200, q: 4, delay: 0.24 });
+  },
+  /** the mechanism seating the tape */
+  clunk() {
+    tone({ freq: 150, a: 0.002, d: 0.12, peak: 0.28, glide: 0.4 });
+    noise({ a: 0.001, d: 0.06, peak: 0.12, f0: 1800, f1: 600, q: 1 });
+  },
+  eject() {
+    tone({ freq: 170, a: 0.002, d: 0.1, peak: 0.24, glide: 0.5 });
+    noise({ a: 0.01, d: 0.3, peak: 0.1, f0: 2400, f1: 700, q: 1, delay: 0.05 });
+    tone({ freq: 320, type: 'triangle', a: 0.005, d: 0.22, peak: 0.05, glide: 1.8, delay: 0.14 });
+  },
+  /** snow between channels */
+  hiss(sec = 0.5) { noise({ a: 0.01, d: sec, peak: 0.08, f0: 5200, f1: 3400, q: 0.35 }); },
+  tvOn() {
+    tone({ freq: 95, a: 0.004, d: 0.24, peak: 0.2, glide: 0.6 });
+    noise({ a: 0.002, d: 0.2, peak: 0.07, f0: 6000, f1: 1800, q: 0.5 });
+  },
+  tvOff() { tone({ freq: 420, a: 0.002, d: 0.32, peak: 0.07, glide: 0.2 }); },
+  /** a VCR front-panel button */
+  key() { tone({ freq: 950, type: 'square', a: 0.001, d: 0.018, peak: 0.03 }); },
+
   /** heartbeat on the film grid: a low "lub", then a softer "dub" */
   beat() {
     tone({ freq: 78, a: 0.006, d: 0.16, peak: 0.32, glide: 0.55 });
