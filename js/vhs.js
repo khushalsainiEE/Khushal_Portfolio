@@ -55,6 +55,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   const osdBl = root.querySelector('#osdBl');
   const now = root.querySelector('#vhsNow');
   const nowText = root.querySelector('#vhsNowText');
+  const playBtn = root.querySelector('.vcr-btn[data-vhs="play"]');
 
   let loaded = null;        // { i, it, el }
   let busy = false;
@@ -64,17 +65,27 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
 
   /* ---------- the stack ---------- */
   const metaOf = (it) => [it.client, it.kindOf === 'photo' ? 'Still' : it.kind, it.year].filter(Boolean).join(' · ');
+  const BANDS = ['#b8402e', '#2f62a8', '#d29a2c', '#3a7f55', '#6a4c93', '#2a8a8a'];
   const tapes = items.map((it, i) => {
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'spine' + (it.kindOf === 'photo' ? ' spine--still' : '');
-    b.style.setProperty('--lt', `${(((i * 53) % 5) - 2) * 0.5}deg`);
+    // a stack is never perfectly square: tiny, fixed offsets per tape
+    b.style.setProperty('--jx', `${((i * 29) % 9) - 4}px`);
+    b.style.setProperty('--jr', `${(((i * 17) % 5) - 2) * 0.15}deg`);
+    b.style.setProperty('--lt', `${(((i * 7) % 5) - 2) * 0.35}deg`);
+    b.style.setProperty('--lx', `${((i * 11) % 5) - 2}px`);
     b.setAttribute('aria-label', `${it.title}, ${it.kindOf === 'photo' ? 'still photo' : it.kind}. Put it in the VCR.`);
     b.innerHTML = `
       <span class="spine-shell"></span>
-      <span class="spine-num">${String(i + 1).padStart(2, '0')}</span>
-      <span class="spine-label"><span>${esc(it.title)}</span>${it.kindOf === 'photo' ? '<i class="spine-stamp">STILL</i>' : ''}</span>
-      <span class="spine-meta">${it.kindOf === 'photo' ? 'photo' : 'T-120'}</span>`;
+      <span class="spine-tab"></span>
+      <span class="spine-well"></span>
+      <span class="spine-label" style="--band:${BANDS[i % BANDS.length]}">
+        <i class="spine-band">${String(i + 1).padStart(2, '0')}</i>
+        <span class="spine-title">${esc(it.title)}</span>
+        ${it.kindOf === 'photo' ? '<i class="spine-stamp">STILL</i>' : ''}
+      </span>
+      <span class="spine-logo">VHS</span>`;
     stack.insertBefore(b, peek);
     return b;
   });
@@ -131,19 +142,34 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   stack.addEventListener('pointerleave', () => { if (!drag) clearPull(); });
 
   /* ---------- LCD + "now playing" ---------- */
-  let counterT = 0, counterStart = 0;
+  // the tape counter follows the YouTube player itself: its real time and state
+  // (state: 1 playing, 2 paused, 3 buffering, 0 ended — the player's own codes)
+  const clock = { t: 0, at: 0, state: -1, on: false };
+  let clockT = 0;
+  const fmt = (sec) => {
+    const x = Math.max(0, Math.floor(sec));
+    return `${Math.floor(x / 3600)}:${String(Math.floor(x / 60) % 60).padStart(2, '0')}:${String(x % 60).padStart(2, '0')}`;
+  };
   function setLcd(text) { lcd.textContent = text; }
-  function startCounter(prefix = '▶') {
-    clearInterval(counterT);
-    counterStart = performance.now();
-    const tick = () => {
-      const s = Math.floor((performance.now() - counterStart) / 1000);
-      setLcd(`${prefix} ${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`);
-    };
-    tick();
-    counterT = setInterval(tick, 1000);
+  const clockNow = () => clock.t + (clock.state === 1 ? (performance.now() - clock.at) / 1000 : 0);
+  function renderClock() {
+    if (!clock.on) return;
+    setLcd(clock.state === 0 ? '■ END' : `${clock.state === 2 ? '❚❚' : '▶'} ${fmt(clockNow())}`);
   }
-  function stopCounter(text) { clearInterval(counterT); if (text) setLcd(text); }
+  function syncPlayBtn() {
+    const playing = clock.on && (clock.state === 1 || clock.state === 3);
+    playBtn.textContent = playing ? '❚❚' : '▶';
+    playBtn.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    playBtn.title = playing ? 'Pause' : 'Play';
+  }
+  function startClock() {
+    // until the player reports in, assume it's playing from 0:00
+    Object.assign(clock, { t: 0, at: performance.now(), state: 1, on: true });
+    clearInterval(clockT);
+    clockT = setInterval(renderClock, 250);
+    renderClock(); syncPlayBtn();
+  }
+  function stopClock(text) { clock.on = false; clearInterval(clockT); if (text) setLcd(text); syncPlayBtn(); }
   function updateNow() {
     now.classList.toggle('has-tape', !!loaded);
     nowText.innerHTML = loaded
@@ -221,8 +247,28 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   let yt = null;   // { frame, it, ready, revealed }
   window.addEventListener('message', (e) => {
     if (!yt || e.source !== yt.frame.contentWindow) return;
+    let d; try { d = typeof e.data === 'string' ? JSON.parse(e.data) : e.data; } catch (x) { return; }
     if (!yt.ready) { yt.ready = true; if (yt.revealed) unmuteFromStart(); }
+    if (!yt.revealed || !d || !d.info || !clock.on) return;   // while loading, the LCD keeps saying LOAD
+    if (typeof d.info.currentTime === 'number') { clock.t = d.info.currentTime; clock.at = performance.now(); }
+    if (typeof d.info.playerState === 'number') { clock.state = d.info.playerState; syncPlayBtn(); }
+    renderClock();
   });
+  function togglePlay() {
+    if (!yt || !clock.on || !loaded) return;
+    const title = loaded.it.title.toUpperCase();
+    if (clock.state === 1 || clock.state === 3) {
+      Object.assign(clock, { t: clockNow(), at: performance.now(), state: 2 });
+      ytSend('pauseVideo');
+      flashOsd('PAUSE ❚❚', title);
+    } else {
+      if (clock.state === 0) { ytSend('seekTo', [0, true]); clock.t = 0; }
+      Object.assign(clock, { at: performance.now(), state: 1 });
+      ytSend('playVideo');
+      flashOsd('PLAY ▶', title);
+    }
+    syncPlayBtn(); renderClock();
+  }
   function ytSend(func, args = []) {
     try { yt.frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*'); } catch (e) {}
   }
@@ -277,8 +323,9 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
       { transform: 'translateY(1.5%)', filter: 'brightness(1.1)', opacity: 1, offset: 0.6 },
       { transform: 'none', filter: 'none', opacity: 1 },
     ], { duration: T(460), easing: EASE_OUT });
-    if (it.kindOf === 'photo') stopCounter('■ STILL');   // the window's own title bar names it
-    else { startCounter(); flashOsd('PLAY ▶', it.title.toUpperCase()); }
+    if (it.kindOf === 'photo') stopClock('■ STILL');   // the window's own title bar names it
+    else if (yt) { startClock(); flashOsd('PLAY ▶', it.title.toUpperCase()); }
+    else stopClock('↗ LINK');                          // plays on another site
   }
 
   async function blank(ms = 260) {
@@ -381,7 +428,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     const { el } = loaded;
     loaded = null;
     Sound.eject();
-    stopCounter('EJECT');
+    stopClock('EJECT');
     updateNow();
     blank(fast ? 200 : 300);
     vcr.classList.add('is-open');
@@ -524,7 +571,9 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
       busy = true; eject().finally(() => { busy = false; });
     } else if (act === 'play') {
       if (!loaded) { setLcd('NO TAPE'); setTimeout(() => !loaded && setLcd('--:--'), 1200); return; }
-      if (paused || !content.innerHTML) play(loaded.it);
+      if (paused || !content.innerHTML) { play(loaded.it); return; }
+      if (loaded.it.kindOf === 'photo') { setLcd('■ STILL'); return; }
+      togglePlay();
     } else if (act === 'big') {
       if (!loaded) return;
       pause();
@@ -538,7 +587,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     yt = null;
     content.classList.remove('is-preload');
     content.innerHTML = `<div class="tv-paused" style="background-image:url('${esc(thumbFor(loaded.it))}')"></div>`;
-    stopCounter('❚❚ PAUSE');
+    stopClock('❚❚ PAUSE');
     flashOsd('PAUSE ❚❚', 'press ▶ to play here');
   }
 
@@ -623,6 +672,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   window.addEventListener('keydown', (e) => {
     if (!visible || document.querySelector('.fsheet.open, .menu.open, .term.open')) return;
     if (e.key === 'Escape' && loaded && !busy) { busy = true; eject().finally(() => { busy = false; }); }
+    if (e.key === ' ' && yt && clock.on && !/^(BUTTON|INPUT|TEXTAREA|A)$/.test(document.activeElement.tagName)) { e.preventDefault(); togglePlay(); }
     const pw = content.querySelector('.pw');
     if (pw && (e.key === '+' || e.key === '=')) pw.querySelector('[data-pw="in"]').click();
     if (pw && (e.key === '-' || e.key === '_')) pw.querySelector('[data-pw="out"]').click();
@@ -653,7 +703,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     content.classList.remove('is-preload');
     yt = null;
     blue.classList.remove('is-hidden');
-    stopCounter(loaded ? 'STOP' : '--:--');
+    stopClock(loaded ? 'STOP' : '--:--');
     powerOff();
     root.classList.remove('in');
     setTimeout(() => { if (!visible) root.hidden = true; }, 460);

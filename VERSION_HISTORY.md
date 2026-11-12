@@ -4,6 +4,12 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.5.1 — 2026-11-12 · realistic tapes, real controls
+- Tape spines look like real cassettes: moulded plastic with a seam and sheen, write-protect tab, debossed VHS logo, recessed paper label with a numbered colour band, a ruled line and a lifting corner; stills get a smoky shell; the stack sits slightly uneven
+- Labels are handwritten in Nanum Pen Script (blue-black ink)
+- The VCR ▶ button now plays / pauses the video (shows ❚❚ while playing); Space does the same
+- The LCD counter follows the video's real time: it stops on pause, jumps when you scrub, shows ■ END when it finishes (▶ replays from 0:00)
+
 ## v1.5.0 — 2026-11-12 · VHS stack
 - Tapes are now a stack of spines lying flat (masking-tape labels, small gaps), like the list view
 - Hover pulls a tape out of the stack (neighbours shift a little) and a preview picture springs out to its right
