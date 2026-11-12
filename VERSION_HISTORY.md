@@ -4,6 +4,10 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.4.1 — 2026-11-12
+- Photo window: the whole photo fits at 100% (portrait shots were cropped); pan limits follow the fitted size
+- The film side can no longer be nudged up when a tape gets keyboard focus
+
 ## v1.4.0 — 2026-11-12 · VHS
 - New third film view, **vhs**: a shelf of cassettes (thumbnail on the label, title on masking tape; stills in a light shell with a STILL stamp)
 - Drag a tape into the VCR, or click it: tape lines up over the slot, the flap opens, it slides in, clunk, static, then it plays on the CRT

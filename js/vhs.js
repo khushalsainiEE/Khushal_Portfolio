@@ -477,9 +477,12 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     const LEVELS = [1, 1.5, 2, 3, 4];
     let z = 1, px = 0, py = 0;
 
+    // the photo is fitted inside the view (object-fit: contain); pan limits use the fitted size
     const bounds = () => {
       const vw = view.clientWidth, vh = view.clientHeight;
-      return { mx: Math.max(0, (img.offsetWidth * z - vw) / 2), my: Math.max(0, (img.offsetHeight * z - vh) / 2) };
+      const nw = img.naturalWidth || vw, nh = img.naturalHeight || vh;
+      const f = Math.min(vw / nw, vh / nh);
+      return { mx: Math.max(0, (nw * f * z - vw) / 2), my: Math.max(0, (nh * f * z - vh) / 2) };
     };
     const apply = () => {
       const { mx, my } = bounds();
