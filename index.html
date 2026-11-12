@@ -176,7 +176,9 @@
 
       <!-- VHS view: drag a tape into the VCR and it plays on the CRT -->
       <div class="vhs" id="vhs" hidden>
-        <div class="vhs-shelf" id="vhsShelf" role="group" aria-label="Tapes. Drag one into the VCR, or press it."></div>
+        <div class="vhs-stack" id="vhsShelf" role="group" aria-label="Tapes. Drag one into the VCR, or press it.">
+          <div class="vhs-peek" id="vhsPeek" aria-hidden="true"><div class="peek-img"><img alt="" decoding="async"></div><div class="peek-cap"><b></b><span></span></div></div>
+        </div>
 
         <div class="vhs-rig" id="vhsRig">
           <div class="tv" id="tv">

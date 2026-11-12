@@ -1,13 +1,18 @@
 /* ============================================================
-   VHS — pick a tape off the shelf, drop it in the VCR, watch it
+   VHS — pull a tape from the stack, drop it in the VCR, watch it
    on the CRT. Photo tapes open in a retro picture window.
 
    Motion notes
-   • drag: the tape follows the pointer with a little lag (weight),
-     tilts with horizontal speed and grows as it nears the VCR
-   • insert: carry → line up over the slot → flap opens → tape
-     flattens into the slot (ease-in) → clunk → static → picture
-   • eject: the reverse, then the tape arcs home to its spot
+   • hover: the tape slides out of the stack like pulling it from a
+     shelf (neighbours shift a touch), and a preview springs out
+     to its right
+   • drag: the copy follows the pointer with a little lag (weight),
+     tilts with horizontal speed and grows toward the slot's size
+   • insert: carry → line up exactly over the slot → flap opens →
+     tape slides in (ease-in) → clunk → static → picture
+     The video starts loading muted the moment the tape is dropped,
+     hidden behind the screen, and is unmuted from 0:00 on reveal.
+   • eject: the reverse, then the tape arcs back to its place
    • TV: CRT power-on (line → full frame), power-off (frame → line → dot)
    Every transform uses the same function list (see tf) so the
    browser can interpolate between any two of them smoothly.
@@ -16,6 +21,7 @@ import { Sound } from './sound.js';
 import { Cursor } from './cursor.js';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 const T = (ms) => (reduced ? 1 : ms);
 const EASE_OUT = 'cubic-bezier(0.22, 1, 0.36, 1)';
 const EASE_IN = 'cubic-bezier(0.55, 0, 0.75, 0.2)';
@@ -29,7 +35,11 @@ const tf = ({ x = 0, y = 0, rx = 0, r = 0, sx = 1, sy = sx } = {}) =>
   `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) perspective(600px) rotateX(${rx.toFixed(2)}deg) rotate(${r.toFixed(2)}deg) scale(${sx.toFixed(4)}, ${sy.toFixed(4)})`;
 
 export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
-  const shelf = root.querySelector('#vhsShelf');
+  const stack = root.querySelector('#vhsShelf');
+  const peek = root.querySelector('#vhsPeek');
+  const peekImg = peek.querySelector('img');
+  const peekTitle = peek.querySelector('.peek-cap b');
+  const peekMeta = peek.querySelector('.peek-cap span');
   const rig = root.querySelector('#vhsRig');
   const tv = root.querySelector('#tv');
   const vcr = root.querySelector('#vcr');
@@ -50,38 +60,75 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   let busy = false;
   let powered = false;
   let visible = false;
-  let thumbsReady = false;
   let paused = false;
 
-  /* ---------- tapes ---------- */
+  /* ---------- the stack ---------- */
+  const metaOf = (it) => [it.client, it.kindOf === 'photo' ? 'Still' : it.kind, it.year].filter(Boolean).join(' · ');
   const tapes = items.map((it, i) => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'tape' + (it.kindOf === 'photo' ? ' tape--still' : '') + (it.kindOf === 'reel' ? ' tape--reel' : '');
-    b.style.setProperty('--tilt', (((i * 37) % 7) - 3) * 0.45 + 'deg');
+    b.className = 'spine' + (it.kindOf === 'photo' ? ' spine--still' : '');
+    b.style.setProperty('--lt', `${(((i * 53) % 5) - 2) * 0.5}deg`);
     b.setAttribute('aria-label', `${it.title}, ${it.kindOf === 'photo' ? 'still photo' : it.kind}. Put it in the VCR.`);
     b.innerHTML = `
-      <span class="tape-shell">
-        <span class="tape-label"><img class="tape-thumb" alt="" decoding="async" draggable="false"></span>
-        <span class="tape-window"><i class="reel"></i><i class="reel"></i></span>
-        <span class="tape-sp">${it.kindOf === 'photo' ? 'PHOTO' : 'T-120'}</span>
-      </span>
-      <span class="tape-strip">${esc(it.title)}</span>
-      ${it.kindOf === 'photo' ? '<span class="tape-stamp">STILL</span>' : ''}`;
-    shelf.appendChild(b);
+      <span class="spine-shell"></span>
+      <span class="spine-num">${String(i + 1).padStart(2, '0')}</span>
+      <span class="spine-label"><span>${esc(it.title)}</span>${it.kindOf === 'photo' ? '<i class="spine-stamp">STILL</i>' : ''}</span>
+      <span class="spine-meta">${it.kindOf === 'photo' ? 'photo' : 'T-120'}</span>`;
+    stack.insertBefore(b, peek);
     return b;
   });
 
+  // resolve each item's best thumbnail once, so the preview pops instantly
+  const thumbUrl = new Map();
+  let thumbsReady = false;
   function loadThumbs() {
     if (thumbsReady) return;
     thumbsReady = true;
-    tapes.forEach((b, i) => {
-      const img = b.querySelector('.tape-thumb');
-      img.style.visibility = 'hidden';            // no broken-image icon if a thumbnail fails
-      img.addEventListener('load', () => { if (img.naturalWidth > 120) img.style.visibility = ''; });
-      setThumb(img, items[i]);
+    items.forEach((it) => {
+      const im = new Image();
+      im.decoding = 'async';
+      im.addEventListener('load', () => { if (im.naturalWidth > 120) thumbUrl.set(it, im.currentSrc || im.src); });
+      setThumb(im, it);
     });
   }
+
+  /* ---------- pull-out + preview ---------- */
+  let pulled = -1, peekT = 0;
+  function pull(i) {
+    if (pulled === i) return;
+    clearPull(false);
+    pulled = i;
+    const el = tapes[i], it = items[i];
+    el.classList.add('is-pulled');
+    tapes[i - 1]?.classList.add('is-nudged', 'up');
+    tapes[i + 1]?.classList.add('is-nudged', 'down');
+    if (!fine) return;
+    clearTimeout(peekT);
+    const wasOn = peek.classList.contains('on');
+    peek.style.top = `${el.offsetTop + el.offsetHeight / 2}px`;
+    peek.classList.toggle('vertical', !!it.vertical);
+    const src = thumbUrl.get(it);
+    const setImg = () => {
+      if (src) peekImg.src = src; else { peekImg.removeAttribute('src'); setThumb(peekImg, it); }
+      peekImg.classList.remove('swap');
+    };
+    if (wasOn) { peekImg.classList.add('swap'); setTimeout(setImg, 90); } else setImg();
+    peekTitle.textContent = it.title;
+    peekMeta.textContent = metaOf(it);
+    // a beat after the tape slides out, the picture jumps out of it
+    peekT = setTimeout(() => peek.classList.add('on'), wasOn ? 0 : T(90));
+  }
+  function clearPull(hidePeek = true) {
+    if (pulled >= 0) {
+      tapes[pulled].classList.remove('is-pulled');
+      tapes[pulled - 1]?.classList.remove('is-nudged', 'up');
+      tapes[pulled + 1]?.classList.remove('is-nudged', 'down');
+    }
+    pulled = -1;
+    if (hidePeek) { clearTimeout(peekT); peek.classList.remove('on'); }
+  }
+  stack.addEventListener('pointerleave', () => { if (!drag) clearPull(); });
 
   /* ---------- LCD + "now playing" ---------- */
   let counterT = 0, counterStart = 0;
@@ -100,7 +147,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   function updateNow() {
     now.classList.toggle('has-tape', !!loaded);
     nowText.innerHTML = loaded
-      ? `now playing · <b>${esc(loaded.it.title)}</b> · ${esc([loaded.it.client, loaded.it.kindOf === 'photo' ? 'Still' : loaded.it.kind].filter(Boolean).join(' · '))}`
+      ? `now playing · <b>${esc(loaded.it.title)}</b> · ${esc(metaOf(loaded.it))}`
       : 'drag a tape into the VCR, or click one';
   }
 
@@ -170,22 +217,59 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     osdT = setTimeout(() => osd.classList.remove('show'), 2600);
   }
 
+  /* ---------- YouTube: load early (muted), reveal with sound ---------- */
+  let yt = null;   // { frame, it, ready, revealed }
+  window.addEventListener('message', (e) => {
+    if (!yt || e.source !== yt.frame.contentWindow) return;
+    if (!yt.ready) { yt.ready = true; if (yt.revealed) unmuteFromStart(); }
+  });
+  function ytSend(func, args = []) {
+    try { yt.frame.contentWindow.postMessage(JSON.stringify({ event: 'command', func, args }), '*'); } catch (e) {}
+  }
+  function unmuteFromStart() {
+    ytSend('seekTo', [0, true]);
+    ytSend('unMute');
+    ytSend('setVolume', [100]);
+    ytSend('playVideo');
+  }
+  function preload(it) {
+    if (it.kindOf === 'photo') { const im = new Image(); im.src = it.full; return; }
+    const id = ytId(it.url);
+    if (!(it.type === 'youtube' && id)) return;
+    if (yt && yt.it === it && content.contains(yt.frame)) return;
+    content.classList.add('is-preload');
+    content.innerHTML = `<iframe class="${it.vertical ? 'is-vertical' : ''}" src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&mute=1&enablejsapi=1&playsinline=1&rel=0&modestbranding=1&origin=${encodeURIComponent(location.origin)}" title="${esc(it.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+    const frame = content.querySelector('iframe');
+    yt = { frame, it, ready: false, revealed: false };
+    // say hello so the player starts talking back (and we know it's ready)
+    frame.addEventListener('load', () => {
+      const hello = () => { try { frame.contentWindow.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), '*'); } catch (e) {} };
+      hello(); setTimeout(hello, 400); setTimeout(hello, 1200);
+    });
+  }
+
   /* ---------- what plays on the screen ---------- */
   function mount(it) {
     paused = false;
-    if (it.kindOf === 'photo') return mountPhoto(it);
+    if (it.kindOf === 'photo') { yt = null; return mountPhoto(it); }
     const id = ytId(it.url);
     if (it.type === 'youtube' && id) {
-      content.innerHTML = `<iframe class="${it.vertical ? 'is-vertical' : ''}" src="https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0&modestbranding=1&playsinline=1" title="${esc(it.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>`;
+      preload(it);                     // no-op if it's already loading
+      yt.revealed = true;
+      if (yt.ready) unmuteFromStart();
+      else setTimeout(() => { if (yt && yt.it === it) unmuteFromStart(); }, 2500);
     } else {
+      yt = null;
       content.innerHTML = `<div class="tv-ext" style="background-image:url('${esc(thumbFor(it))}')"><div><p>this tape plays on ${esc(it.platform || 'another site')}</p><a href="${esc(it.url)}" target="_blank" rel="noopener">watch on ${esc((it.platform || 'site').toLowerCase())} ↗</a></div></div>`;
     }
   }
 
   async function play(it) {
     powerOn();
-    await snow(520);
+    preload(it);
+    await snow(480);
     mount(it);
+    content.classList.remove('is-preload');
     blue.classList.add('is-hidden');
     // the picture "catches" vertical hold as it arrives
     content.animate([
@@ -201,6 +285,8 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     clearTimeout(osdT);
     osd.classList.remove('show');
     content.innerHTML = '';
+    content.classList.remove('is-preload');
+    yt = null;
     await snow(ms);
     blue.classList.remove('is-hidden');
   }
@@ -210,8 +296,8 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     const r = el.getBoundingClientRect();
     const w = el.offsetWidth, h = el.offsetHeight;
     const g = el.cloneNode(true);
-    g.classList.remove('is-out', 'is-loaded');
-    g.classList.add('tape-ghost');
+    g.classList.remove('is-out', 'is-loaded', 'is-pulled', 'is-nudged', 'up', 'down');
+    g.classList.add('spine-ghost');
     g.removeAttribute('aria-label');
     g.setAttribute('aria-hidden', 'true');
     g.tabIndex = -1;
@@ -219,23 +305,19 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
       left: `${r.left + r.width / 2 - w / 2}px`, top: `${r.top + r.height / 2 - h / 2}px`,
       width: `${w}px`, height: `${h}px`, transform: tf(),
     });
-    g.style.setProperty('--tw', `${w}px`);
+    g.style.setProperty('--sh', `${h}px`);
+    g.style.setProperty('--sw', `${w}px`);
     document.body.appendChild(g);
     g._base = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w, h };
     return g;
   }
-  // where the ghost must go to sit over the slot, and to vanish into it
+  // the spine lines up exactly over the slot, then slides into it
   function slotGeo(g) {
     const s = slot.getBoundingClientRect();
     const b = g._base;
-    const scale = (s.width * 0.96) / b.w;
-    return {
-      x: s.left + s.width / 2 - b.cx,
-      pre: s.top - 8 - (b.h * scale) / 2 - b.cy,
-      in: s.top + s.height / 2 - b.cy,
-      s: scale,
-    };
+    return { x: s.left + s.width / 2 - b.cx, y: s.top + s.height / 2 - b.cy, s: (s.width * 0.97) / b.w };
   }
+  const intoSlot = (g) => ({ x: g.x, y: g.y + 2, rx: 0, sx: g.s * 0.86, sy: g.s * 0.62 });
   function inZone(x, y) {
     const r = rig.getBoundingClientRect();
     const pad = 28;
@@ -248,32 +330,34 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     busy = true;
     const el = tapes[i], it = items[i];
     try {
+      clearPull();
       el.classList.add('is-out');
       if (loaded && loaded.i !== i) await eject({ fast: true });
       powerOn();
+      preload(it);                                   // start loading now, while the tape travels
       const fromClick = !ghost;
       if (!ghost) { ghost = makeGhost(el); st = {}; Sound.pickup(); }
       const g = slotGeo(ghost);
       vcr.classList.add('is-target');
 
-      // 1) carry it over the slot (an arc if it came from a click)
+      // 1) carry it to the slot (an arc if it came from a click)
       const start = { x: 0, y: 0, r: 0, sx: 1, ...st };
-      const over = { x: g.x, y: g.pre, sx: g.s };
+      const over = { x: g.x, y: g.y - 4, sx: g.s };
       const carry = fromClick
-        ? [{ transform: tf(start) }, { transform: tf({ x: g.x * 0.55, y: Math.min(0, g.pre) * 0.55 - 70, r: g.x > 0 ? 7 : -7, sx: (1 + g.s) / 2 + 0.08 }), offset: 0.5 }, { transform: tf(over) }]
+        ? [{ transform: tf(start) }, { transform: tf({ x: g.x * 0.55, y: g.y * 0.55 - 80, r: g.x > 0 ? 5 : -5, sx: (1 + g.s) / 2 + 0.06 }), offset: 0.5 }, { transform: tf(over) }]
         : [{ transform: tf(start) }, { transform: tf(over) }];
-      await ghost.animate(carry, { duration: T(fromClick ? 760 : 360), easing: fromClick ? EASE_IO : EASE_OUT, fill: 'forwards' }).finished;
+      await ghost.animate(carry, { duration: T(fromClick ? 760 : 380), easing: fromClick ? EASE_IO : EASE_OUT, fill: 'forwards' }).finished;
 
-      // 2) flap opens, tape flattens into the slot
+      // 2) flap opens, tape slides in
       vcr.classList.remove('is-target');
       vcr.classList.add('is-open');
       setLcd('LOAD');
       Sound.insert();
       await ghost.animate([
         { transform: tf(over), filter: 'brightness(1)', opacity: 1 },
-        { transform: tf({ x: g.x, y: (g.pre + g.in) / 2, rx: 30, sx: g.s, sy: g.s * 0.6 }), filter: 'brightness(0.8)', opacity: 1, offset: 0.55 },
-        { transform: tf({ x: g.x, y: g.in, rx: 64, sx: g.s * 0.98, sy: g.s * 0.04 }), filter: 'brightness(0.3)', opacity: 0 },
-      ], { duration: T(440), easing: EASE_IN, fill: 'forwards' }).finished;
+        { transform: tf({ ...over, y: g.y }), filter: 'brightness(0.9)', opacity: 1, offset: 0.25 },
+        { transform: tf(intoSlot(g)), filter: 'brightness(0.25)', opacity: 0 },
+      ], { duration: T(420), easing: EASE_IN, fill: 'forwards' }).finished;
       ghost.remove();
 
       // 3) clunk
@@ -284,7 +368,7 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
       loaded = { i, it, el };
       el.classList.add('is-loaded');
       updateNow();
-      await wait(T(240));
+      await wait(T(200));
       await play(it);
     } finally {
       busy = false;
@@ -304,23 +388,23 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     vcr.classList.remove('has-tape');
     const ghost = makeGhost(el);
     const g = slotGeo(ghost);
-    const over = { x: g.x, y: g.pre, sx: g.s };
+    const over = { x: g.x, y: g.y - 4, sx: g.s };
     await ghost.animate([
-      { transform: tf({ x: g.x, y: g.in, rx: 64, sx: g.s * 0.98, sy: g.s * 0.04 }), filter: 'brightness(0.3)', opacity: 0 },
-      { transform: tf({ ...over, y: g.pre - 16 }), filter: 'brightness(1)', opacity: 1, offset: 0.7 },
-      { transform: tf(over), filter: 'brightness(1)', opacity: 1 },
+      { transform: tf(intoSlot(g)), filter: 'brightness(0.25)', opacity: 0 },
+      { transform: tf({ ...over, y: g.y - 22 }), filter: 'brightness(1)', opacity: 1, offset: 0.7 },
+      { transform: tf({ ...over, y: g.y - 16 }), filter: 'brightness(1)', opacity: 1 },
     ], { duration: T(fast ? 360 : 520), easing: EASE_OUT, fill: 'forwards' }).finished;
     vcr.classList.remove('is-open');
-    if (!fast) await wait(T(160));
+    if (!fast) await wait(T(140));
     const home = ghost.animate([
-      { transform: tf(over) },
-      { transform: tf({ x: g.x * 0.45, y: g.pre * 0.45 - 56, r: g.x > 0 ? -6 : 6, sx: (1 + g.s) / 2 }), offset: 0.5 },
+      { transform: tf({ ...over, y: g.y - 16 }) },
+      { transform: tf({ x: g.x * 0.45, y: g.y * 0.45 - 64, r: g.x > 0 ? -4 : 4, sx: (1 + g.s) / 2 }), offset: 0.5 },
       { transform: tf() },
     ], { duration: T(fast ? 520 : 700), easing: EASE_IO, fill: 'forwards' });
     const land = () => {
       ghost.remove();
       el.classList.remove('is-out', 'is-loaded');
-      el.animate([{ transform: 'translateY(-4px) rotate(var(--tilt))' }, { transform: 'rotate(var(--tilt))' }], { duration: T(320), easing: SPRING });
+      el.animate([{ transform: 'translateX(-10px)' }, { transform: 'translateX(0)' }], { duration: T(360), easing: SPRING });
     };
     if (fast) home.finished.then(land); else { await home.finished; land(); }
     setLcd('STOP');
@@ -335,6 +419,12 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
 
   /* ---------- drag ---------- */
   let drag = null;
+  let swallowClickUntil = 0;
+  // a drop ends with a click on whatever is underneath; never let that click reach anything
+  window.addEventListener('click', (e) => {
+    if (performance.now() < swallowClickUntil) { e.stopImmediatePropagation(); e.preventDefault(); }
+  }, true);
+
   function onDown(e, i) {
     if (e.button !== undefined && e.button !== 0) return;
     if (loaded && loaded.i === i) return;      // the empty spot: click ejects instead
@@ -342,9 +432,9 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   }
   function startDrag(e) {
     const el = tapes[drag.i];
+    clearPull();
     const ghost = makeGhost(el);
     el.classList.add('is-out');
-    el._noClick = true;
     Object.assign(drag, {
       started: true, ghost,
       ox: e.clientX - ghost._base.cx, oy: e.clientY - ghost._base.cy,
@@ -361,12 +451,12 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
       const vx = gx - c.x;
       c.x += vx * 0.38;
       c.y += (gy - c.y) * 0.38;
-      c.r += (clamp(vx * 0.22, -16, 16) - c.r) * 0.18;
-      // grow toward the slot size as it gets close to the VCR
+      c.r += (clamp(vx * 0.18, -12, 12) - c.r) * 0.18;
+      // grow toward the slot's width as it gets close to the VCR
       const s = slot.getBoundingClientRect();
-      const dist = Math.hypot(d.tx - (s.left + s.width / 2), d.ty - s.top);
-      const near = clamp(1 - dist / 420, 0, 1);
-      const target = 1.08 + ((s.width * 0.96) / b.w - 1.08) * near * 0.85;
+      const dist = Math.hypot(d.tx - (s.left + s.width / 2), d.ty - (s.top + s.height / 2));
+      const near = clamp(1 - dist / 460, 0, 1);
+      const target = 1.06 + ((s.width * 0.97) / b.w - 1.06) * near * 0.9;
       c.sx += (target - c.sx) * 0.2;
       d.ghost.style.transform = tf({ x: c.x, y: c.y, r: c.r, sx: c.sx });
       d.raf = requestAnimationFrame(loop);
@@ -378,8 +468,8 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
     if (!drag.started) {
       const far = Math.hypot(dx, dy) > 7;
-      // on touch, a sideways swipe scrolls the shelf; dragging up picks the tape
-      if (far && (!drag.touch || Math.abs(dy) > Math.abs(dx))) startDrag(e);
+      // on touch, an up/down swipe scrolls the page; a sideways pull picks the tape
+      if (far && (!drag.touch || Math.abs(dx) > Math.abs(dy))) startDrag(e);
       else if (far && drag.touch) drag = null;
       return;
     }
@@ -396,13 +486,13 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag; drag = null;
     if (!d.started) return;
+    swallowClickUntil = performance.now() + 350;
     cancelAnimationFrame(d.raf);
     document.body.classList.remove('is-dragging-tape');
     Cursor.tag(null);
     const st = { ...d.cur };
     if (d.over && e.type !== 'pointercancel') insert(d.i, d.ghost, st);
     else { if (!loaded) setLcd('--:--'); returnHome(d.ghost, tapes[d.i], st); }
-    setTimeout(() => { tapes[d.i]._noClick = false; }, 0);
   };
   window.addEventListener('pointerup', end);
   window.addEventListener('pointercancel', end);
@@ -410,15 +500,18 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   tapes.forEach((el, i) => {
     el.addEventListener('pointerdown', (e) => onDown(e, i));
     el.addEventListener('click', () => {
-      if (el._noClick) return;
       if (loaded && loaded.i === i) { if (!busy) { busy = true; eject().finally(() => { busy = false; }); } return; }
+      if (!fine) root.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });   // phones: bring the TV into view
       insert(i);
     });
-    el.addEventListener('pointerenter', () => {
+    el.addEventListener('pointerenter', (e) => {
       if (drag && drag.started) return;
       Sound.hover();
+      if (e.pointerType === 'mouse' || e.pointerType === 'pen') pull(i);
       Cursor.tag(loaded && loaded.i === i ? 'eject' : 'drag or click');
     });
+    el.addEventListener('focus', () => { if (el.matches(':focus-visible')) pull(i); });
+    el.addEventListener('blur', () => { if (pulled === i) clearPull(); });
     el.addEventListener('pointerleave', () => { if (!drag) Cursor.tag(null); });
   });
 
@@ -442,6 +535,8 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   function pause() {
     if (!loaded || loaded.it.kindOf === 'photo') return;
     paused = true;
+    yt = null;
+    content.classList.remove('is-preload');
     content.innerHTML = `<div class="tv-paused" style="background-image:url('${esc(thumbFor(loaded.it))}')"></div>`;
     stopCounter('❚❚ PAUSE');
     flashOsd('PAUSE ❚❚', 'press ▶ to play here');
@@ -498,7 +593,8 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
       apply();
       Sound.key();
     };
-    img.addEventListener('load', () => { dim.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`; apply(); });
+    const ready = () => { dim.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`; apply(); };
+    if (img.complete && img.naturalWidth) ready(); else img.addEventListener('load', ready);
     pw.querySelectorAll('[data-pw]').forEach((b) => b.addEventListener('click', (e) => {
       e.stopPropagation();
       const a = b.dataset.pw;
@@ -538,10 +634,11 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
     visible = true;
     loadThumbs();
     root.classList.remove('in'); void root.offsetWidth; root.classList.add('in');
+    // tapes slide in from the left, one after another, like being stacked
     tapes.forEach((t, k) => t.animate([
-      { opacity: 0, transform: 'translateY(26px) rotate(var(--tilt)) scale(0.96)' },
-      { opacity: 1, transform: 'rotate(var(--tilt))' },
-    ], { duration: T(560), delay: T(60 + k * 34), easing: EASE_OUT, fill: 'backwards' }));
+      { opacity: 0, transform: 'translateX(-40px)' },
+      { opacity: 1, transform: 'translateX(0)' },
+    ], { duration: T(560), delay: T(40 + k * 32), easing: EASE_OUT, fill: 'backwards' }));
     rig.animate([{ opacity: 0, transform: 'translateY(30px)' }, { opacity: 1, transform: 'none' }], { duration: T(640), delay: T(80), easing: EASE_OUT, fill: 'backwards' });
     setTimeout(() => {
       if (!visible) return;
@@ -551,7 +648,10 @@ export function initVhs({ root, items, setThumb, ytId, openSheet, thumbFor }) {
   }
   function hide() {
     visible = false;
+    clearPull();
     content.innerHTML = '';                 // stops any video
+    content.classList.remove('is-preload');
+    yt = null;
     blue.classList.remove('is-hidden');
     stopCounter(loaded ? 'STOP' : '--:--');
     powerOff();

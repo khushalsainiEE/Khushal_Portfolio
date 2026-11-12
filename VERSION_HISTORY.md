@@ -4,6 +4,14 @@ Changelog for the Khushal Saini portfolio site. Git commit messages should mirro
 
 ---
 
+## v1.5.0 — 2026-11-12 · VHS stack
+- Tapes are now a stack of spines lying flat (masking-tape labels, small gaps), like the list view
+- Hover pulls a tape out of the stack (neighbours shift a little) and a preview picture springs out to its right
+- Much bigger TV: sized to the window height, thinner bezels, wider screen
+- The spine lines up with the VCR slot and slides in; eject reverses it
+- The video starts loading muted the moment you drop the tape, then unmutes from 0:00 when the picture appears
+- Dropping a tape no longer triggers the grid heartbeat
+
 ## v1.4.1 — 2026-11-12
 - Photo window: the whole photo fits at 100% (portrait shots were cropped); pan limits follow the fitted size
 - The film side can no longer be nudged up when a tape gets keyboard focus
