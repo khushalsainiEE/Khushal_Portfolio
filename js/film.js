@@ -1,9 +1,7 @@
 /* ============================================================
-   FILM SIDE — spiral reel, list view, project sheet.
-   The spiral is pure CSS 3D (no WebGL), so YouTube thumbnails
-   load straight from YouTube with no CORS trouble.
+   FILM SIDE — the VHS view (tapes, VCR, CRT) and the large-player sheet.
    ============================================================ */
-import { FILMS, PHOTOS, SHOWREEL } from './content.js';
+import { FILMS, PHOTOS } from './content.js';
 import { Sound } from './sound.js';
 import { Cursor } from './cursor.js';
 import { initPulse } from './pulse.js';
@@ -40,7 +38,7 @@ function setThumb(img, item) {
 function buildItems() {
   const films = FILMS.map((f, i) => ({ ...f, kindOf: 'film', idx: i }));
   const photos = PHOTOS.map((p) => ({ title: p.label, client: 'Photography', kind: 'Still', year: '', kindOf: 'photo', vertical: true, thumb: p.src + '-md.webp', full: p.src + '.webp', fullJpg: p.src + '.jpg' }));
-  // interleave photos among films so the spiral feels mixed
+  // interleave photos among films so the stack feels mixed
   const out = [];
   films.forEach((f, i) => { out.push(f); if (i % 3 === 2 && photos.length) out.push(photos.shift()); });
   return out.concat(photos);
@@ -48,245 +46,14 @@ function buildItems() {
 
 export function initFilm({ face }) {
   const items = buildItems();
-  const wrap = face.querySelector('#spiralWrap');
-  const spiral = face.querySelector('#spiral');
-  const listEl = face.querySelector('#filmList');
-  const listUl = face.querySelector('#filmListItems');
-  const preview = face.querySelector('#listPreview');
-  const capIndex = face.querySelector('#fcIndex');
-  const capTitle = face.querySelector('#fcTitle');
-  const capMeta = face.querySelector('#fcMeta');
-  const caption = face.querySelector('.film-caption');
-
-  /* ---------- spiral ---------- */
-  const N = items.length;
-  const PERSP = 1400;
-  const RAD = () => (window.innerWidth < 700 ? window.innerWidth * 0.5 : Math.min(560, Math.max(300, window.innerWidth * 0.33)));
-  const MAG = PERSP / (PERSP - RAD());   // how much the old layout magnified the front card
-  const cards = items.map((it, i) => {
-    const el = document.createElement('button');
-    el.className = 's-card';
-    el.setAttribute('aria-label', `${it.title} — ${it.kind}`);
-    // cards are built at the size they appear on screen (the spiral is pushed back by its
-    // radius so the front card sits at depth 0): text and photos render 1:1, never upscaled
-    const k = (window.innerWidth < 700 ? 0.58 : 0.84) * MAG;
-    const w = Math.round((it.vertical ? 190 : 302) * k);
-    const h = Math.round((it.vertical ? 300 : 187) * k);
-    el.style.setProperty('--w', w + 'px');
-    el.style.setProperty('--h', h + 'px');
-    const img = document.createElement('img');
-    img.alt = '';
-    img.decoding = 'async';
-    setThumb(img, it);
-    el.appendChild(img);
-    if (it.kindOf === 'photo') { const b = document.createElement('span'); b.className = 's-badge'; b.textContent = 'still'; el.appendChild(b); }
-    el.addEventListener('pointerenter', () => { el.classList.add('is-hover'); Sound.hover(); Cursor.tag(it.kindOf === 'photo' ? 'view' : (it.type === 'external' ? 'open ↗' : 'play')); });
-    el.addEventListener('pointerleave', () => { el.classList.remove('is-hover'); Cursor.tag(null); });
-    el.addEventListener('click', (e) => {
-      if (dragMoved > 6) return;
-      openSheet(it, el);
-    });
-    spiral.appendChild(el);
-    return el;
-  });
-
-  // spacing tuned so neighbouring cards sit just apart (about −10 to +60 px on laptop/desktop screens)
-  const STEP = 40;                                           // degrees between cards
-  const DY = (window.innerWidth < 700 ? 100 : 158) * MAG;   // vertical rise per card
-  let pos = 0, target = 0, vel = 0, last = -1;
-  let mx = 0, my = 0, tmx = 0, tmy = 0;
-  let running = false, raf = 0;
-  let dragMoved = 0;
-  let view = 'spiral';
   let vhs = null;
-  // intro: cards unfold from a tight stack into the spiral, centre card first
-  let introStart = -1;
-  const INTRO_MS = 1500;
-  const easeOut = (x) => 1 - Math.pow(1 - x, 4);
-  const easeIO = (x) => (x < 0.5 ? 8 * x * x * x * x : 1 - Math.pow(-2 * x + 2, 4) / 2);
-  // cache last written values so we only touch the DOM when something changed
-  const cache = cards.map(() => ({ t: '', o: '', f: '', z: '', p: '' }));
-  const put = (el, c, key, prop, val) => { if (c[key] !== val) { c[key] = val; el.style[prop] = val; } };
 
-  function wrapOffset(o) {
-    o = ((o % N) + N) % N;
-    return o > N / 2 ? o - N : o;
-  }
+  function prepare() { vhs && vhs.prepare(); }
+  function enter() { vhs.show(); }
+  function leave() { vhs.hide(); }          // stop the TV straight away
 
-  function render(now) {
-    raf = requestAnimationFrame(render);
-    if (!running || view !== 'spiral') return;
-    const prev = pos;
-    pos += (target - pos) * 0.085;
-    vel += ((pos - prev) - vel) * 0.25;
-    mx += (tmx - mx) * 0.06;
-    my += (tmy - my) * 0.06;
-
-    const it = introStart < 0 ? 1 : Math.min(1, ((now || performance.now()) - introStart) / INTRO_MS);
-    const E = easeIO(it);
-    const R = RAD();
-    // each card carries the whole chain itself (push back, tilt, place on the helix). The spiral
-    // container is flat, so cards are painted in depth order and never cut through each other.
-    const base = `translateZ(${(-R).toFixed(1)}px) rotateX(${(-my * 6).toFixed(2)}deg) rotateY(${(mx * 10 + (1 - E) * -24).toFixed(2)}deg) `;
-    const bend = Math.max(-18, Math.min(18, vel * 260)) * E;
-    const spin = (1 - E) * -1.6;           // the whole helix swings into place
-
-    for (let i = 0; i < N; i++) {
-      const o = wrapOffset(i - pos - spin);
-      const abs = Math.abs(o);
-      // each card starts a touch later the further it is from the centre
-      const local = Math.max(0, Math.min(1, (it * INTRO_MS - Math.min(abs, 4) * 90) / (INTRO_MS - 360)));
-      const e = easeOut(local);
-      const ang = o * STEP * e;
-      const vis = abs < N / 2 - 0.5;
-      const el = cards[i], c = cache[i];
-      const tr = base + `rotateY(${ang.toFixed(2)}deg) translateZ(${(R * (0.25 + 0.75 * e)).toFixed(1)}px) translateY(${(o * DY * e).toFixed(1)}px) rotateY(${(-ang * 0.35).toFixed(2)}deg) skewY(${(bend * Math.sign(o || 1) * 0.3).toFixed(2)}deg) rotateZ(${(bend * 0.15 + (1 - e) * o * 4).toFixed(2)}deg) scale(${(0.72 + 0.28 * e).toFixed(3)})`;
-      put(el, c, 't', 'transform', tr);
-      const op = vis ? Math.max(0, 1 - Math.max(0, abs - 2.4) * 0.28) * e : 0;
-      put(el, c, 'o', 'opacity', op.toFixed(2));
-      // blur stepped in 0.5px increments: far cheaper than a new filter every frame
-      const blur = Math.round(Math.max(0, abs - 1.1) * 2.4 * e * 2) / 2;
-      put(el, c, 'f', 'filter', blur > 0 ? `blur(${blur}px) brightness(${(1 - Math.min(0.5, Math.round(abs) * 0.1)).toFixed(1)})` : 'none');
-      // paint order follows real depth on the cylinder; the focused card always wins
-      const depth = Math.cos((ang + mx * 10) * Math.PI / 180) * (0.25 + 0.75 * e);
-      put(el, c, 'z', 'zIndex', String(Math.round(1000 + depth * 500 - abs)));
-      put(el, c, 'p', 'pointerEvents', abs < 2.6 && it >= 1 ? 'auto' : 'none');
-    }
-    const cur = ((Math.round(pos) % N) + N) % N;
-    if (cur !== last) {
-      last = cur;
-      const item = items[cur];
-      capIndex.textContent = String(cur + 1).padStart(2, '0') + ' / ' + String(N).padStart(2, '0');
-      capTitle.textContent = item.title;
-      capMeta.textContent = [item.client, item.kind].filter(Boolean).join(' · ');
-      caption.classList.remove('swap'); void caption.offsetWidth; caption.classList.add('swap');
-      if (it >= 1) Sound.tick();
-    }
-  }
-
-  function prepare() {
-    running = false;
-    introStart = -1;
-    vhs && vhs.prepare();
-    wrap.style.transition = 'none';
-    wrap.style.opacity = '0';
-    caption.style.opacity = '0';
-  }
-  function enter() {
-    if (view === 'list') { running = true; return; }
-    if (view === 'vhs') { running = true; vhs.show(); return; }
-    target = pos = Math.round(target);
-    introStart = performance.now();
-    running = true;
-    wrap.style.transition = 'opacity .35s ease';
-    wrap.style.opacity = '1';
-    caption.style.transition = 'opacity .6s ease .9s';
-    caption.style.opacity = '';
-    // a soft "deal" as the nearest cards land
-    [0, 1, 2, 3, 4].forEach((k) => setTimeout(() => Sound.deal(k), 380 + k * 110));
-  }
-  function leave() {
-    if (view === 'vhs') vhs.hide();          // stop the TV straight away
-    setTimeout(() => { running = false; }, 1300);
-  }
-
-  requestAnimationFrame(render);
-
-  // heartbeat on the empty grid (never on a card, never after a drag)
+  // heartbeat on the empty grid
   const pulse = initPulse(face.querySelector('#filmPulse'), face);
-  wrap.addEventListener('click', (e) => {
-    if (e.target.closest('.s-card') || dragMoved > 6) return;
-    const r = face.getBoundingClientRect();
-    pulse.beat(e.clientX - r.left, e.clientY - r.top);
-    Sound.beat();
-  });
-
-  // wheel / trackpad
-  wrap.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const d = Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-    target += d * 0.0032;
-  }, { passive: false });
-  // drag / touch
-  let dragX = null, dragStart = 0;
-  wrap.addEventListener('pointerdown', (e) => { dragX = e.clientY + e.clientX; dragStart = target; dragMoved = 0; });
-  window.addEventListener('pointermove', (e) => {
-    tmx = (e.clientX / window.innerWidth) * 2 - 1;
-    tmy = (e.clientY / window.innerHeight) * 2 - 1;
-    if (dragX === null) return;
-    const d = (e.clientY + e.clientX) - dragX;
-    dragMoved = Math.abs(d);
-    target = dragStart - d * 0.006;
-  }, { passive: true });
-  window.addEventListener('pointerup', () => { dragX = null; setTimeout(() => (dragMoved = 0), 0); target = Math.round(target); });
-  // snap gently to nearest card when idle
-  let snapT = 0;
-  wrap.addEventListener('wheel', () => { clearTimeout(snapT); snapT = setTimeout(() => (target = Math.round(target)), 220); }, { passive: true });
-
-  window.addEventListener('keydown', (e) => {
-    if (!running || view !== 'spiral' || document.querySelector('.fsheet.open, .menu.open, .term.open')) return;
-    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') { target = Math.round(target) + 1; }
-    if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') { target = Math.round(target) - 1; }
-    if (e.key === 'Enter' && view === 'spiral') { const i = ((Math.round(pos) % N) + N) % N; openSheet(items[i], cards[i]); }
-  });
-
-  /* ---------- list view ---------- */
-  items.forEach((it, i) => {
-    const li = document.createElement('li');
-    li.style.setProperty('--i', i);
-    const b = document.createElement('button');
-    b.innerHTML = `<span class="row-in">${it.title} <sup>${it.kindOf === 'photo' ? 'still' : it.kind.toLowerCase()}</sup></span>`;
-    b.addEventListener('pointerenter', () => {
-      listUl.classList.add('has-hover');
-      b.classList.add('is-hover');
-      const img = preview.querySelector('img');
-      img.removeAttribute('src');
-      setThumb(img, it);
-      preview.classList.toggle('vertical', !!it.vertical);
-      preview.classList.add('on');
-      Sound.hover();
-    });
-    b.addEventListener('pointerleave', () => { listUl.classList.remove('has-hover'); b.classList.remove('is-hover'); preview.classList.remove('on'); });
-    b.addEventListener('click', () => openSheet(it, b));
-    li.appendChild(b);
-    listUl.appendChild(li);
-  });
-  // floating preview follows the cursor with lag + tilt
-  let px = 0, py = 0, ptx = 0, pty = 0;
-  listEl.addEventListener('pointermove', (e) => { ptx = e.clientX; pty = e.clientY; });
-  (function loopPrev() {
-    requestAnimationFrame(loopPrev);
-    if (view !== 'list') return;
-    const vx = ptx - px;
-    px += vx * 0.12; py += (pty - py) * 0.12;
-    const w = preview.offsetWidth, h = preview.offsetHeight;
-    preview.style.translate = `${px - w / 2}px ${py - h / 2}px`;
-    preview.style.rotate = `${Math.max(-12, Math.min(12, vx * 0.08))}deg`;
-  })();
-
-  function setView(v) {
-    if (v === view) return;
-    const prev = view;
-    view = v;
-    document.querySelectorAll('.view-btn').forEach((b) => b.classList.toggle('is-active', b.dataset.view === v));
-    face.classList.toggle('view-list', v === 'list');
-    face.classList.toggle('view-vhs', v === 'vhs');
-    document.body.classList.toggle('film-vhs', v === 'vhs');
-    Cursor.tag(null);
-    // spiral
-    wrap.style.transition = 'opacity .5s';
-    wrap.style.opacity = v === 'spiral' ? '1' : '0';
-    wrap.style.pointerEvents = v === 'spiral' ? '' : 'none';
-    if (v === 'spiral') target = Math.round(target);
-    // list
-    if (v === 'list') { listEl.hidden = false; listEl.classList.remove('in'); void listEl.offsetWidth; listEl.classList.add('in'); }
-    else { listEl.hidden = true; preview.classList.remove('on'); }
-    // vhs
-    if (v === 'vhs') vhs.show();
-    else if (prev === 'vhs') vhs.hide();
-    Sound.whoosh();
-  }
-  document.querySelectorAll('.view-btn').forEach((b) => b.addEventListener('click', () => { Sound.click(); setView(b.dataset.view); }));
 
   /* ---------- project sheet ---------- */
   const sheet = document.getElementById('fsheet');
@@ -361,14 +128,6 @@ export function initFilm({ face }) {
   sheet.querySelectorAll('[data-close-fsheet]').forEach((b) => b.addEventListener('click', closeSheet));
   window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
 
-  /* ---------- showreel badge ---------- */
-  const badge = document.getElementById('reelBadge');
-  const reelItem = { ...SHOWREEL, client: 'Khushal Saini', kind: 'Showreel', kindOf: 'film', vertical: false, blurb: 'Two-ish minutes of the best bits — events, people, motion and rhythm.' };
-  const rt = badge.querySelector('.reel-thumb');
-  const rid = ytId(SHOWREEL.url);
-  if (rid) rt.style.backgroundImage = `url(https://i.ytimg.com/vi/${rid}/hqdefault.jpg)`;
-  badge.addEventListener('click', () => openSheet(reelItem, rt));
-
   /* ---------- VHS view ---------- */
   const vhsRoot = face.querySelector('#vhs');
   vhs = initVhs({
@@ -385,10 +144,5 @@ export function initFilm({ face }) {
     Sound.beat();
   });
 
-  return {
-    setActive(v) { running = v; if (v) { target = Math.round(target); } },
-    prepare, enter, leave,
-    setView,
-    closeSheet,
-  };
+  return { prepare, enter, leave, closeSheet };
 }

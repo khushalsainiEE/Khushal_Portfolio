@@ -45,13 +45,6 @@
     <a class="pill pill--soft" href="#experience" data-goto="experience">Experience</a>
     <a class="pill pill--soft" href="#contact" data-goto="contact">Contact</a>
   </nav>
-  <nav class="hud-center hud-center--film" aria-label="Film view">
-    <button class="view-btn is-active" data-view="spiral">spiral</button>
-    <i class="sep"></i>
-    <button class="view-btn" data-view="list">list</button>
-    <i class="sep"></i>
-    <button class="view-btn" data-view="vhs">vhs</button>
-  </nav>
 
   <div class="hud-right">
     <button class="pill pill--flip" id="flipBtn" data-cursor="flip">
@@ -69,13 +62,6 @@
   <span class="eq" aria-hidden="true"><i></i><i></i><i></i></span>
 </button>
 
-<button id="reelBadge" class="reel-badge" aria-label="Play showreel" data-cursor="play reel">
-  <svg viewBox="0 0 120 120" class="reel-ring" aria-hidden="true">
-    <defs><path id="reelCircle" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
-    <text><textPath href="#reelCircle">showreel • 2025 • showreel • 2025 • showreel • 2025 •</textPath></text>
-  </svg>
-  <span class="reel-thumb"></span>
-</button>
 
 <p class="hint hint--slash">Press <kbd>/</kbd> for ?</p>
 
@@ -165,14 +151,7 @@
       <div class="film-grid" aria-hidden="true"></div>
       <canvas class="film-pulse" id="filmPulse" aria-hidden="true"></canvas>
 
-      <div class="spiral-wrap" id="spiralWrap">
-        <div class="spiral" id="spiral"></div>
-      </div>
 
-      <div class="film-list" id="filmList" hidden>
-        <ul id="filmListItems"></ul>
-        <div class="list-preview" id="listPreview" aria-hidden="true"><img alt=""></div>
-      </div>
 
       <!-- VHS view: drag a tape into the VCR and it plays on the CRT -->
       <div class="vhs" id="vhs" hidden>
@@ -235,11 +214,6 @@
         </div>
       </div>
 
-      <div class="film-caption" aria-hidden="true">
-        <span class="fc-index" id="fcIndex">01</span>
-        <span class="fc-title" id="fcTitle"></span>
-        <span class="fc-meta" id="fcMeta"></span>
-      </div>
     </section>
 
   </div>

@@ -160,6 +160,4 @@ export const Sound = {
     noise({ a: 0.002, d: 0.05, peak: 0.05, f0: 300, f1: 120, q: 0.9 });
     tone({ freq: 66, a: 0.006, d: 0.14, peak: 0.2, glide: 0.55, delay: 0.24 });
   },
-  /** cards landing in the spiral */
-  deal(i) { tone({ freq: 420 + i * 70, a: 0.003, d: 0.07, peak: 0.05, glide: 1.4 }); },
 };

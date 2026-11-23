@@ -1,7 +1,7 @@
 /* ============================================================
    KHUSHAL SAINI — research ⟷ film
    Research face: warm paper, chip typography, iridescent silicon.
-   Film face: near-black, grid, spiral reel.
+   Film face: near-black, grid, VHS tapes + TV.
    ============================================================ */
 
 :root {
@@ -184,12 +184,7 @@ body.side-research.hud-away .hud { transform: translateY(-100%); }
 body.side-film .logo { background: var(--snow); color: var(--night); border-radius: 50%; }
 
 .hud-center { display: flex; gap: 4px; align-items: center; transition: opacity 0.4s, transform 0.5s var(--ease-out); }
-.hud-center--film { position: absolute; left: 50%; transform: translateX(-50%); gap: 10px; font-size: 12px; color: var(--snow); }
-body.side-research .hud-center--film, body.side-film .hud-center--research { opacity: 0; pointer-events: none; transform: translate(-50%, -8px); }
-body.side-film .hud-center--research { transform: translateY(-8px); }
-.view-btn { color: var(--snow-3); transition: color 0.3s; padding: 6px 2px; }
-.view-btn.is-active, .view-btn:hover { color: var(--snow); }
-.hud-center--film .sep { width: 4px; height: 4px; background: var(--snow); border-radius: 50%; display: inline-block; }
+body.side-film .hud-center--research { opacity: 0; pointer-events: none; transform: translateY(-8px); }
 
 .hud-right { justify-self: end; display: flex; gap: 6px; }
 .pill--menu { background: var(--ink); color: var(--paper); }
@@ -217,26 +212,6 @@ body.side-research #soundBtn, body.side-research .hint--slash { opacity: 0; poin
 .hint--slash kbd { font-family: inherit; padding: 1px 5px; border-radius: 3px; background: var(--chip-light); color: var(--ink); }
 body.side-film .hint--slash { color: var(--snow-3); }
 body.side-film .hint--slash kbd { background: #222; color: var(--snow); }
-
-/* rotating showreel badge (film side) */
-.reel-badge {
-  position: fixed; left: calc(var(--gutter) - 26px); bottom: calc(var(--gutter) - 26px); z-index: 50;
-  width: 150px; height: 150px;
-  opacity: 0; pointer-events: none; transform: translate(-30px, 30px) rotate(-20deg);
-  transition: opacity 0.6s, transform 0.9s var(--ease-out);
-}
-body.side-film .reel-badge { opacity: 1; pointer-events: auto; transform: none; }
-.reel-ring { position: absolute; inset: 0; animation: spin 14s linear infinite; }
-.reel-ring text { font-family: var(--f-sans); font-size: 10.5px; fill: var(--snow); letter-spacing: 0.08em; }
-@keyframes spin { to { transform: rotate(360deg); } }
-.reel-thumb {
-  position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; margin: -32px 0 0 -32px;
-  border-radius: 16px; background-size: cover; background-position: center;
-  transform: rotate(-12deg); transition: transform 0.6s var(--ease-spring);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-.reel-badge:hover .reel-thumb { transform: rotate(0) scale(1.15); }
-.reel-badge:hover .reel-ring { animation-duration: 4s; }
 
 /* ============================================================
    STAGE + BOOK (the flip)
@@ -453,48 +428,6 @@ body.side-film .reel-badge { opacity: 1; pointer-events: auto; transform: none; 
   mask-image: radial-gradient(ellipse at center, #000 30%, transparent 85%);
 }
 .film-pulse { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.spiral-wrap { position: absolute; inset: 0; touch-action: none; }
-.spiral { position: absolute; left: 50%; top: 48%; transform-style: flat; perspective: 1400px; perspective-origin: 0 -20px; }
-.s-card {
-  position: absolute; left: 0; top: 0;
-  width: var(--w); height: var(--h); margin: calc(var(--h) / -2) 0 0 calc(var(--w) / -2);
-  border-radius: 12px; overflow: hidden;
-  background: #1a1a1a;
-  backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  transition: box-shadow 0.4s;
-}
-.s-card img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.06); transition: transform 0.8s var(--ease-out); pointer-events: none; }
-.s-card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(120deg, rgba(255,255,255,0.18), transparent 40%); opacity: 0.6; pointer-events: none; }
-.s-card.is-hover img { transform: scale(1.14); }
-.s-card .s-badge { position: absolute; left: 12px; top: 12px; z-index: 1; font-size: 12px; line-height: 1; font-family: var(--f-mono); padding: 6px 9px; border-radius: 6px; background: rgba(0,0,0,0.5); color: var(--snow); -webkit-font-smoothing: antialiased; }
-
-.film-caption {
-  position: absolute; left: 50%; bottom: 34px; transform: translateX(-50%);
-  display: flex; align-items: baseline; gap: 12px; white-space: nowrap;
-  font-size: 13px; color: var(--snow);
-  transition: opacity 0.4s;
-}
-.fc-index { font-family: var(--f-mono); font-size: 11px; color: var(--snow-3); }
-.fc-meta { font-family: var(--f-mono); font-size: 11px; color: var(--snow-2); }
-.film-caption.swap .fc-title { animation: swapIn 0.5s var(--ease-out); }
-@keyframes swapIn { from { opacity: 0; transform: translateY(8px); filter: blur(4px); } }
-.view-list .film-caption { opacity: 0; }
-
-.film-list { position: absolute; inset: 0; overflow-y: auto; padding: calc(var(--hud-h) + 4vh) var(--gutter) 15vh; scrollbar-width: none; flex-direction: column; }
-.film-list:not([hidden]) { display: flex; }
-.film-list ul { margin: auto 0; display: flex; flex-direction: column; align-items: center; gap: 0.1em; font-size: clamp(26px, min(3.1vw, 5.2vh), 50px); letter-spacing: -0.03em; line-height: 1.1; }
-.film-list li { position: relative; z-index: 2; }
-.film-list li button { transition: color 0.4s, opacity 0.4s; display: inline-flex; align-items: baseline; gap: 0.3em; }
-.film-list li sup { font-family: var(--f-mono); font-size: 11px; letter-spacing: 0; color: var(--snow-3); }
-.film-list li .row-in { display: inline-block; transform: translateY(110%); opacity: 0; }
-.film-list.in li .row-in { animation: rowIn 0.9s var(--ease-out) forwards; animation-delay: calc(var(--i) * 45ms); }
-@keyframes rowIn { to { transform: none; opacity: 1; } }
-.film-list ul.has-hover li button { color: var(--snow-3); }
-.film-list ul.has-hover li button.is-hover { color: var(--snow); }
-.list-preview { position: fixed; left: 0; top: 0; width: 280px; aspect-ratio: 16 / 10; border-radius: 10px; overflow: hidden; pointer-events: none; z-index: 1; opacity: 0; transform: scale(0.7); transition: opacity 0.3s, transform 0.5s var(--ease-out); }
-.list-preview.vertical { width: 180px; aspect-ratio: 9 / 14; }
-.list-preview img { width: 100%; height: 100%; object-fit: cover; }
-.list-preview.on { opacity: 1; transform: scale(1); }
 
 /* ============================================================
    MENU (Pacôme-style white panel)
@@ -680,8 +613,6 @@ html.fx-bw #stage { filter: grayscale(1) contrast(1.1); }
 }
 .vhs.in { opacity: 1; }
 .vhs[hidden] { display: none; }
-body.film-vhs .reel-badge { opacity: 0 !important; pointer-events: none !important; }
-.view-vhs .film-caption { opacity: 0; }
 
 /* ---------- the stack of tapes (spines, lying flat) ---------- */
 .vhs-stack { position: relative; z-index: 4; display: flex; flex-direction: column; gap: 5px; }
@@ -976,15 +907,11 @@ body.side-film.has-cursor .pw, body.side-film.has-cursor .pw * { cursor: default
   .hero-corner--r, .hint--slash { display: none; }
   .hero-chips { bottom: 16vh; }
   .facts div { grid-template-columns: 110px 1fr; }
-  .reel-badge { transform: scale(0.8); width: 120px; height: 120px; }
-  body.side-film .reel-badge { transform: none; }
 }
 @media (max-width: 560px) {
   .pill--flip .flip-label { display: none !important; }
   .hero-corner--l { display: none; }
   .hero-chips { font-size: 11vw; }
-  .hud-center--film { top: 100%; }
-  .film-caption { bottom: 96px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

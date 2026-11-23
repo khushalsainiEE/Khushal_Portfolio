@@ -169,35 +169,13 @@ $('#menuSocials').innerHTML = PROFILE.socials.map((s) => `<a href="${s.url}" tar
 $('#yr').textContent = new Date().getFullYear();
 
 /* ============================================================
-   RESEARCH — smooth scroll + reveals
+   RESEARCH — scrolling + reveals
+   Native scrolling (no wheel hijack / momentum), so the page moves exactly
+   with the mouse wheel or trackpad. Nav clicks still glide to the section.
    ============================================================ */
-const smooth = (() => {
-  let target = 0, current = 0, active = false;
-  const max = () => scroller.scrollHeight - scroller.clientHeight;
-  if (!reduced && window.matchMedia('(pointer: fine)').matches) {
-    scroller.addEventListener('wheel', (e) => {
-      if (e.ctrlKey) return;
-      e.preventDefault();
-      if (!active) { target = current = scroller.scrollTop; }
-      target = Math.max(0, Math.min(max(), target + e.deltaY * (e.deltaMode === 1 ? 32 : 1)));
-      active = true;
-    }, { passive: false });
-  }
-  function tick() {
-    requestAnimationFrame(tick);
-    if (!active) return;
-    current += (target - current) * 0.1;
-    if (Math.abs(target - current) < 0.4) { current = target; active = false; }
-    scroller.scrollTop = current;
-  }
-  tick();
-  return {
-    to(y) {
-      if (reduced) { scroller.scrollTop = y; return; }
-      target = Math.max(0, Math.min(max(), y)); current = scroller.scrollTop; active = true;
-    },
-  };
-})();
+const smooth = {
+  to(y) { scroller.scrollTo({ top: y, behavior: reduced ? 'auto' : 'smooth' }); },
+};
 
 const io = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { root: scroller, threshold: 0.15 });
 $$('.reveal, .about-photo', scroller).forEach((el) => io.observe(el));
@@ -276,7 +254,7 @@ function flip(to) {
     if (Sound.wanted && !Sound.enabled) Sound.enable(true);
     Sound.setSide('film');
     Sound.flip();
-    film.prepare();          // cards gathered and hidden while the page turns
+    film.prepare();          // VHS view hidden while the page turns
   } else {
     Sound.setSide('research');
     film.leave();
@@ -302,7 +280,7 @@ function flip(to) {
     document.body.classList.toggle('side-research', side === 'research');
     document.body.classList.toggle('side-film', side === 'film');
   }, 650);
-  // start dealing the cards as the film face settles, so the motion is continuous
+  // bring the VHS view in as the film face settles, so the motion is continuous
   if (to === 'film') setTimeout(() => film.enter(), 1050);
   anim.onfinish = () => {
     angle = a + 180;
